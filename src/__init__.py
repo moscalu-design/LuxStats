@@ -1,0 +1,1 @@
+"""LuxStats application package."""

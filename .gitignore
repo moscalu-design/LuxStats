@@ -1,8 +1,11 @@
 .env
 __pycache__/
+.pytest_cache/
 *.pyc
 .venv/
 venv/
 cache/
+data/cache/*
+!data/cache/.gitkeep
 .streamlit/secrets.toml
 .DS_Store

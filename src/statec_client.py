@@ -165,9 +165,9 @@ def _parse_dataflows(xml_bytes: bytes) -> list[Dataflow]:
             for n in df.findall(f"{{{NS['com']}}}Name")
         }
         struct_ref = None
-        ref = df.find(f"{{{NS['str']}}}Structure/{{{NS['mes']}}}Ref") or df.find(
-            f"{{{NS['str']}}}Structure/Ref"
-        )
+        ref = df.find(f"{{{NS['str']}}}Structure/{{{NS['mes']}}}Ref")
+        if ref is None:
+            ref = df.find(f"{{{NS['str']}}}Structure/Ref")
         if ref is not None:
             struct_ref = ref.attrib.get("id")
         flows.append(

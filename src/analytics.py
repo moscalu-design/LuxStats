@@ -13,7 +13,7 @@ from typing import Any
 import duckdb
 import pandas as pd
 
-from cache import DUCKDB_PATH, table_name_for
+from src.cache import DUCKDB_PATH, table_name_for
 
 ALLOWED_AGGS = {"sum", "avg", "mean", "min", "max", "count", "median", "none"}
 ALLOWED_ORDERS = {"asc", "desc"}

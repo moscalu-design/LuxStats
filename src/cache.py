@@ -17,10 +17,10 @@ from typing import Any
 import duckdb
 import pandas as pd
 
-from statec_client import Dataflow, StatecClient
+from src.statec_client import Dataflow, StatecClient
 
-ROOT = Path(__file__).resolve().parent
-CACHE_DIR = ROOT / "cache"
+ROOT = Path(__file__).resolve().parents[1]
+CACHE_DIR = ROOT / "data" / "cache"
 CSV_DIR = CACHE_DIR / "csv"
 DUCKDB_PATH = CACHE_DIR / "lustat.duckdb"
 DATAFLOWS_JSON = CACHE_DIR / "dataflows.json"
@@ -121,7 +121,7 @@ def fetch_and_cache_dataset(
     else:
         csv_text = client.get_data_csv(flow.flow_ref)
         csv_path.write_text(csv_text, encoding="utf-8")
-    from statec_client import parse_sdmx_csv  # avoid cycle at import time
+    from src.statec_client import parse_sdmx_csv  # avoid cycle at import time
     df = parse_sdmx_csv(csv_text)
     if df.empty:
         return df, csv_path

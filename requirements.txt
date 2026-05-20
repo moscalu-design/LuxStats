@@ -5,3 +5,4 @@ requests>=2.31
 plotly>=5.18
 anthropic>=0.39
 python-dotenv>=1.0
+pytest>=8.0

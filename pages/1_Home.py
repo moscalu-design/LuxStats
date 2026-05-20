@@ -1,5 +1,3 @@
-"""Luxembourg Statistics Portal entry page."""
-
 from __future__ import annotations
 
 from dotenv import load_dotenv
@@ -9,13 +7,6 @@ from src.ui_components import configure_page, mirror_streamlit_secrets, render_s
 
 load_dotenv()
 mirror_streamlit_secrets()
-configure_page()
-
-
-def main() -> None:
-    render_sidebar()
-    render_home()
-
-
-if __name__ == "__main__":
-    main()
+configure_page("LuxStats - Home")
+render_sidebar()
+render_home()
