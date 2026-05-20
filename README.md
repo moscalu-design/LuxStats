@@ -11,6 +11,7 @@ The app is not centered on an LLM chatbot. The optional natural-language query t
 - `src/statec_client.py` - thin LUSTAT SDMX REST client.
 - `src/cache.py` - CSV and DuckDB cache layer.
 - `src/catalog.py` - starter curated dataset catalog with TODO entries for IDs that still need confirmation.
+- `src/dashboard_specs.py` - page-level placeholder copy and planned dashboard views.
 - `src/charts.py` - reusable Plotly chart builders.
 - `src/transforms.py` - shared dataframe transformations.
 - `src/ui_components.py` - shared Streamlit layout and source-info components.
@@ -51,12 +52,14 @@ Cached data is local to the running environment. Use the app's refresh buttons t
 1. Confirm the official LUSTAT dataflow ID from the Dataset Explorer or STATEC / LUSTAT.
 2. Add or update an entry in `src/catalog.py`.
 3. Include friendly keywords and aliases, such as `house prices`, `real estate`, `wages`, or `population by commune`.
-4. Build a dashboard page using `get_dataset(dataset_id)` from `src/data_access.py`.
-5. Show source details with `data_source_info(...)`.
+4. For placeholder dashboards, add planned views in `src/dashboard_specs.py`.
+5. Build a connected dashboard page using `get_dataset(dataset_id)` from `src/data_access.py`.
+6. Show source details with `data_source_info(...)`.
 
 Do not invent dataset IDs. Use `TODO_CONFIRM_*` placeholders until the official ID is verified.
 
 Catalog entries should describe the dataset in normal language: title, theme, description, likely filters, geography, update frequency, dashboard fit, and caveats. The Dataset Explorer shows these fields before users need to inspect raw LUSTAT codes.
+The catalog tests check that unconfirmed entries keep the `TODO_CONFIRM_*` prefix, themes match the app navigation, and placeholder dashboards have at least one matching catalog entry.
 
 ## Refreshing Data
 

@@ -7,6 +7,11 @@ from typing import Any
 
 import pandas as pd
 
+from src.config import THEME_ORDER
+
+
+TODO_DATASET_PREFIX = "TODO_CONFIRM_"
+
 
 @dataclass(frozen=True)
 class CatalogEntry:
@@ -187,6 +192,40 @@ STARTER_CATALOG: list[CatalogEntry] = [
 
 def catalog_dataframe() -> pd.DataFrame:
     return pd.DataFrame([entry.as_dict() for entry in STARTER_CATALOG])
+
+
+def is_placeholder_dataset_id(dataset_id: str) -> bool:
+    return str(dataset_id).startswith(TODO_DATASET_PREFIX)
+
+
+def catalog_themes() -> list[str]:
+    """Return visible catalog themes in the app's preferred order."""
+    known = set(catalog_dataframe()["theme"].dropna().unique())
+    ordered = [theme for theme in THEME_ORDER if theme in known]
+    extras = sorted(known.difference(ordered))
+    return ordered + extras
+
+
+def catalog_validation_issues() -> list[str]:
+    """Flag catalog metadata mistakes that can confuse users or future wiring."""
+    issues: list[str] = []
+    df = catalog_dataframe()
+    duplicate_ids = sorted(df[df["dataset_id"].duplicated()]["dataset_id"].unique())
+    for dataset_id in duplicate_ids:
+        issues.append(f"Duplicate catalog dataset_id: {dataset_id}")
+
+    unknown_themes = sorted(set(df["theme"]).difference(THEME_ORDER))
+    for theme in unknown_themes:
+        issues.append(f"Catalog theme is missing from THEME_ORDER: {theme}")
+
+    for row in df.to_dict("records"):
+        dataset_id = str(row["dataset_id"])
+        status = str(row.get("status") or "")
+        if is_placeholder_dataset_id(dataset_id) and status != "needs_confirmation":
+            issues.append(f"{dataset_id} is a placeholder but status is {status!r}")
+        if not is_placeholder_dataset_id(dataset_id) and status == "needs_confirmation":
+            issues.append(f"{dataset_id} looks confirmed but still has needs_confirmation status")
+    return issues
 
 
 def search_catalog(query: str = "", theme: str | None = None, recommended_only: bool = False) -> pd.DataFrame:
