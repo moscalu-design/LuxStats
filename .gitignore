@@ -2,6 +2,7 @@
 __pycache__/
 .pytest_cache/
 agent_logs/
+STOP_AGENT
 *.pyc
 .venv/
 venv/

@@ -74,6 +74,23 @@ pytest
 python -m py_compile app.py pages/*.py src/*.py tests/*.py
 ```
 
+## Automated UX Refactor Loop
+
+`run_codex_refactor_loop.sh` runs repeated Codex improvement cycles focused on UX/UI polish, commits each passing cycle, and pushes to GitHub by default so Streamlit Community Cloud can redeploy the connected branch.
+
+```bash
+STREAMLIT_APP_URL=https://your-app.streamlit.app ./run_codex_refactor_loop.sh
+```
+
+Useful controls:
+
+- Stop after the current cycle: `touch STOP_AGENT`
+- Run one cycle only: `MAX_CYCLES=1 SLEEP_SECONDS=0 ./run_codex_refactor_loop.sh`
+- Disable pushing: `AUTO_PUSH=0 ./run_codex_refactor_loop.sh`
+- Disable committing: `AUTO_COMMIT=0 ./run_codex_refactor_loop.sh`
+
+The loop reads its UX instructions from `AGENT_TASK.md`. Keep that file focused on visible product improvements so the automation continues to prioritize the user experience over broad refactors.
+
 ## Roadmap
 
 - Confirm official dataset IDs for housing, rents, population by commune, labour market, CPI, education, mobility, and public finance.
