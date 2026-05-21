@@ -36,7 +36,11 @@ def format_delta(value: float | int | None, value_format: str = "number") -> str
         return None
     spec = VALUE_FORMATS.get(value_format, VALUE_FORMATS["number"])
     decimals = spec["decimals"]
-    sign = "+" if value >= 0 else "−"
+    # Use an ASCII hyphen-minus for negatives: st.metric decides the delta
+    # arrow/colour by testing whether the string starts with "-", and a
+    # typographic minus sign ("−", U+2212) is not recognised — it would make
+    # a negative change render as a green upward arrow.
+    sign = "+" if value >= 0 else "-"
     body = f"{abs(value):,.{decimals}f}"
     return f"{sign}{spec['prefix']}{body}{spec['suffix']}"
 
