@@ -1,14 +1,14 @@
 # Source Visualization Index
 
-Generated: 2026-05-21T11:50:21+00:00
+Generated: 2026-05-21T12:22:57+00:00
 
 ## Summary
 
 - Total sources: 1,396
-- Chart-ready: 20
+- Chart-ready: 24
 - Preview-ready: 0
 - Downloadable only: 0
-- Needs mapping: 643
+- Needs mapping: 639
 - Needs manual review: 451
 - Not chartable: 0
 - Low priority / archived: 282
@@ -26,12 +26,12 @@ Generated: 2026-05-21T11:50:21+00:00
 - Environment / Energy: 0 chart-ready, 0 preview-ready, 45 need mapping
 - Health: 0 chart-ready, 0 preview-ready, 7 need mapping
 - Housing: 4 chart-ready, 0 preview-ready, 44 need mapping
-- Labour Market: 4 chart-ready, 0 preview-ready, 58 need mapping
+- Labour Market: 5 chart-ready, 0 preview-ready, 57 need mapping
 - Other / Unknown: 0 chart-ready, 0 preview-ready, 0 need mapping
-- Population: 4 chart-ready, 0 preview-ready, 187 need mapping
+- Population: 6 chart-ready, 0 preview-ready, 185 need mapping
 - Prices / Inflation: 1 chart-ready, 0 preview-ready, 18 need mapping
 - Public Finance: 0 chart-ready, 0 preview-ready, 41 need mapping
-- Salaries / Income: 3 chart-ready, 0 preview-ready, 68 need mapping
+- Salaries / Income: 4 chart-ready, 0 preview-ready, 67 need mapping
 - Social Conditions: 0 chart-ready, 0 preview-ready, 0 need mapping
 - Tourism: 0 chart-ready, 0 preview-ready, 13 need mapping
 - Transport: 0 chart-ready, 0 preview-ready, 0 need mapping
