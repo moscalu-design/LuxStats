@@ -15,6 +15,7 @@ from src.concepts import concepts_for_topic
 from src.data.source_catalog import get_sources_by_category
 from src.data.source_visualization import get_chart_ready_sources, get_sources_needing_mapping
 from src.ui.catalog_views import render_source_coverage_badges, render_source_records
+from src.ui.nationality_explorer import render_nationality_section
 from src.ui.page_header import render_page_header
 from src.ui.source_visualizer import render_source_card
 from src.ui_components import section_header
@@ -131,6 +132,9 @@ def render_topic_page(topic: str) -> None:
 
     for concept in concepts:
         render_concept(concept, key=f"topic_{concept.id}")
+
+    if topic == "Population":
+        render_nationality_section()
 
     st.divider()
     _render_chart_ready_sources(topic)
