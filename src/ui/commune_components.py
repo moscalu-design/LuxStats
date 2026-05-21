@@ -41,7 +41,7 @@ def render_commune_trend(item: dict, key: str) -> None:
     fig = line_chart(chart_df, dataset.time_column, dataset.value_column, title="How this commune changed over time")
     fig.update_xaxes(title_text="")
     fig.update_yaxes(title_text="")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=f"chart_{key}_trend")
     download_csv(chart_df, f"{key}_trend.csv", "Download data", key=f"download_{key}_trend")
 
 
@@ -56,7 +56,7 @@ def render_ranking(item: dict, key: str) -> None:
     fig = ranked_bar_chart(ranking.head(20), ranking.columns[0], dataset.value_column, top_n=20, title="Where this commune ranks")
     fig.update_xaxes(title_text="")
     fig.update_yaxes(title_text="")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, key=f"chart_{key}_ranking")
     download_csv(ranking, f"{key}_ranking.csv", "Download ranking", key=f"download_{key}_ranking")
 
 

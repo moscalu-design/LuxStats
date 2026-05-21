@@ -21,4 +21,21 @@ def test_all_pages_configure_streamlit_before_rendering() -> None:
 
 
 def test_commune_portal_page_exists() -> None:
-    assert (ROOT / "pages" / "9_Commune_Portal.py").exists()
+    assert (ROOT / "pages" / "3_Commune_Portal.py").exists()
+
+
+def test_new_modules_import_cleanly() -> None:
+    import importlib
+
+    for module in [
+        "src.data.analysis_cards",
+        "src.data.geography",
+        "src.ui.cards",
+        "src.ui.explanations",
+        "src.ui.source_badges",
+        "src.ui.maps",
+        "src.ui.chart_builder",
+        "src.analysis.comparison",
+        "src.analysis.changes",
+    ]:
+        importlib.import_module(module)

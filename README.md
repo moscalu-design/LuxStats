@@ -1,53 +1,81 @@
 # LuxStats
 
-LuxStats is a Streamlit portal for exploring official Luxembourg statistics from STATEC / LUSTAT. The goal is a friendly public data product: curated topic pages, simple filters, interactive Plotly charts, source notes, downloads, and a searchable dataset catalog.
+LuxStats is a Streamlit portal that turns official Luxembourg statistics from
+STATEC / LUSTAT into a **guided statistics product** — not just a prettier
+dataset browser. Official LUSTAT data is powerful but dataset-first and
+code-heavy. LuxStats answers human questions through clear UI flows instead:
+*"What are housing prices doing?"*, *"How does my commune compare?"*,
+*"What changed recently?"*
 
-The app is not centered on an LLM chatbot. The optional natural-language query tool from the original salary explorer is preserved inside the Salaries page, but the main product flow is dashboard and catalog driven.
+It is fully deterministic. **There is no LLM, chatbot, or AI answer box.**
+Everything is driven by official data, curated metadata, reusable charts, and
+static plain-language templates.
 
-## Current Structure
+## What the app does
 
-- `app.py` - main Streamlit entry page (the "find a statistic fast" home).
-- `pages/` - Streamlit multipage topic dashboards.
-- `src/concepts.py` - the curated concept layer: each entry maps an everyday
-  question to a confirmed LUSTAT dataset plus chart configuration.
-- `src/concept_view.py` - turns one concept into a finished, friendly chart
-  block (metrics, chart, "what this means", source expander, CSV download).
-- `src/topic_page.py` - renders a topic page from its curated concepts.
-- `src/home.py` - home page: search box, topic cards, popular charts.
-- `src/search.py` - synonym-aware search mapping plain words to concepts.
-- `src/data/communes.py` - canonical Luxembourg commune names and cautious
-  alias matching for entries such as "Luxembourg City".
-- `src/data/commune_portal.py` - defensive profile builder for commune-level
-  datasets already known to the catalog or cached locally.
-- `src/ui/commune_components.py` - Commune Portal cards, charts, tables, and
-  source-detail components.
-- `src/formatting.py` - human-friendly value/label formatting (euros, %, etc.).
-- `src/charts.py` - reusable Plotly chart builders.
-- `src/statec_client.py` - thin LUSTAT SDMX REST client.
-- `src/cache.py` - CSV and DuckDB cache layer.
-- `src/data_access.py` - high-level `get_dataset(id)` used by concepts.
-- `src/catalog.py` - advanced dataset catalog with TODO entries for IDs that
-  still need confirmation; powers the Dataset Explorer.
-- `src/dashboard_specs.py` - catalog context for the Dataset Explorer.
-- `src/transforms.py` - shared dataframe transformations.
-- `src/ui_components.py` - shared Streamlit layout, theme, and source-info components.
-- `src/salary_explorer.py` - advanced raw salary/dataflow explorer (opt-in).
-- `data/cache/` - local DuckDB and CSV cache files.
-- `data/metadata/` - place for curated metadata files as the catalog grows.
+- **Find a Statistic** — search in plain language ("housing prices", "median
+  salary", "population Hesperange") and get friendly metric cards.
+- **Build a Chart** — pick a topic, metric, items and chart type in a few
+  clicks; no dataset codes required.
+- **Compare** — put communes head to head, or compare sectors and groups
+  within one statistic.
+- **What Changed?** — the latest available figures and the biggest recent
+  moves, all calculated from real cached data.
+- **Commune Portal** — choose one of Luxembourg's 100 communes and see every
+  connected commune-level statistic in one profile, including a map view.
+- **Topic dashboards** — Housing, Salaries, Population, Labour Market, Prices
+  & Inflation, each rendered from curated charts with explanations and sources.
+- **Dataset Explorer** — the advanced page for power users to search every
+  official dataset and export raw CSVs.
 
-## UX Layers
+Every chart shows a plain-language explanation, a source/freshness badge, and
+a CSV download. Raw STATEC / LUSTAT codes stay inside "Advanced details"
+expanders, hidden by default.
 
-- **Home** - large search box, topic cards, and one-click popular charts.
-- **Search** - synonym-aware: "pay", "wages", "income" all find salary charts.
-- **Topic pages** - Housing, Salaries, Population, Labour Market, Prices &
-  Inflation each render their curated concepts as finished charts. No raw
-  dataset IDs or SDMX jargon — those live inside each chart's advanced expander.
-- **Commune Portal** - choose one Luxembourg commune and see every connected
-  official commune-level dataset for that commune in one profile.
-- **Dataset Explorer** - the advanced page for searching every official
-  STATEC / LUSTAT dataset and exporting raw CSVs.
+## Main user features
 
-## Run Locally
+| Feature | Where |
+| --- | --- |
+| Metric Finder (friendly search) | Home, `pages/1_Find_a_Statistic.py` |
+| Guided analysis cards | Home (`src/data/analysis_cards.py`) |
+| Comparison mode | `pages/4_Compare.py` (`src/analysis/comparison.py`) |
+| Build a Chart tool | `pages/2_Build_a_Chart.py` (`src/ui/chart_builder.py`) |
+| What Changed page | `pages/5_What_Changed.py` (`src/analysis/changes.py`) |
+| Commune Portal + map | `pages/3_Commune_Portal.py` |
+| Plain-language explanations | `src/ui/explanations.py` |
+| Source / freshness badges | `src/ui/source_badges.py` |
+
+## Project structure
+
+- `app.py` — Streamlit entry page (the product home).
+- `pages/` — Streamlit multipage app, ordered for a product-led navigation.
+- `src/concepts.py` — the **curated metric catalog**: each `Concept` maps an
+  everyday question to a confirmed LUSTAT dataset plus chart configuration.
+- `src/concept_view.py` — turns one concept into a finished chart block.
+- `src/topic_page.py` — renders a topic dashboard from its concepts.
+- `src/home.py` — home page sections: search, analysis cards, topic cards.
+- `src/search.py` — synonym-aware search mapping plain words to concepts.
+- `src/data/analysis_cards.py` — curated guided-analysis journey cards.
+- `src/data/communes.py` — canonical commune names and cautious alias matching.
+- `src/data/commune_portal.py` — defensive commune profile builder.
+- `src/data/geography.py` — geospatial hook for commune boundary GeoJSON.
+- `src/analysis/comparison.py` — metric and commune comparison engine.
+- `src/analysis/changes.py` — recent-change detection.
+- `src/ui/cards.py` — friendly metric and analysis cards.
+- `src/ui/explanations.py` — template-based plain-language explanations.
+- `src/ui/source_badges.py` — source and data-freshness badges.
+- `src/ui/chart_builder.py` — the guided "Build a Chart" flow.
+- `src/ui/maps.py` — commune map view (honest empty state until boundaries
+  are connected).
+- `src/ui/commune_components.py` — Commune Portal cards, charts, tables.
+- `src/charts.py` / `src/formatting.py` — reusable Plotly charts and value
+  formatting (euros, %, counts).
+- `src/statec_client.py` / `src/cache.py` / `src/data_access.py` — LUSTAT
+  SDMX client, DuckDB + CSV cache, and the high-level `get_dataset(id)`.
+- `src/catalog.py` — advanced dataset catalog (includes `TODO_CONFIRM_*`
+  placeholders) powering the Dataset Explorer.
+
+## Run locally
 
 ```bash
 python -m venv .venv
@@ -56,56 +84,45 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Optional natural-language querying on the Salaries page uses:
+## Run the tests
 
 ```bash
-ANTHROPIC_API_KEY=...
-ANTHROPIC_MODEL=...
+python -m compileall app.py pages src tests
+pytest
+./scripts/test_app.sh
 ```
 
-If no key is set, the app falls back to a small deterministic planner.
+`scripts/test_app.sh` runs the compile check, pytest, a core Streamlit import
+check, and optional Playwright browser tests when installed.
 
-## Deployment
+## How to add a new metric
 
-This remains deployable on Streamlit Community Cloud:
+Add a `Concept` to `src/concepts.py`:
 
-1. Keep `app.py` at the repository root.
-2. Keep dependencies in `requirements.txt`.
-3. Add optional secrets in Streamlit Cloud if using the natural-language query expander.
+1. Confirm the official LUSTAT dataflow ID against the live SDMX API or the
+   Dataset Explorer. Only confirmed IDs belong in `concepts.py`.
+2. Add a `Concept(...)`: friendly `title`, plain `description`, matching
+   `topic`, everyday `keywords`, the `dataset_id`, a `chart` type (`line`,
+   `ranked_bar`), a `value_format`, an `explanation`, and `geographic_level`.
+3. Set `series_dim`, `default_series`, `series_labels`, `filters` so the chart
+   shows the right, readable slice. A `series_dim` also makes the metric
+   available in Compare and Build a Chart.
+4. Set `popular=True` to surface it on the home page and What Changed.
 
-Cached data is local to the running environment. Use the app's refresh buttons to update dataflow lists or selected datasets.
+The topic page, Metric Finder, chart builder and comparison engine all pick
+the concept up automatically.
 
-## Commune Portal
+## How to add a new dataset
 
-Open `pages/9_Commune_Portal.py` from the sidebar or search for a commune on
-the home page, for example `Hesperange`, `population Hesperange`, or
-`housing Luxembourg City`.
+Unconfirmed candidate datasets stay in `src/catalog.py` as `CatalogEntry`
+rows with `TODO_CONFIRM_*` IDs and `status="needs_confirmation"`; they power
+only the advanced Dataset Explorer. Once an ID is confirmed, either promote it
+to a `Concept` (for curated charts) or set `status="confirmed"` with a real
+`dataset_id`. Never invent dataset IDs.
 
-The portal is intentionally conservative:
+## How to add commune-level support
 
-- It only shows values from datasets declared or detected as commune-level.
-- National-only datasets are not converted into local estimates.
-- Empty topic sections explain that no connected commune-level data is
-  available yet.
-- Source details and caveats stay under expanders.
-- The commune list contains the 100 current Luxembourg communes from
-  Luxembourg geoportal administrative metadata checked in May 2026.
-
-Confirmed commune-level LUSTAT tables currently wired into the portal:
-
-- `DF_X021` - Population by canton and municipality.
-- `DF_X020` - Population density by canton and municipality on 1 January.
-- `DF_C1600` - Monthly salaries by municipality, filtered to the Median indicator.
-- `DF_X026` - Employment and unemployment by canton and municipality, filtered
-  to the unemployment-rate indicator.
-- `DSD_CENSUS_NB_LOG_CLA@DF_B1707` - Census dwellings by type of building,
-  occupancy status, canton and municipality, filtered to totals.
-- `DSD_CENSUS_MENAGE_PV@DF_B1703` - Census private households by canton and
-  municipality, filtered to total household size.
-
-## Adding Commune-Level Datasets
-
-Add or update a catalog entry in `src/catalog.py` with these fields:
+Add a confirmed commune-level `CatalogEntry` in `src/catalog.py`:
 
 ```python
 CatalogEntry(
@@ -125,80 +142,70 @@ CatalogEntry(
 )
 ```
 
-Use `commune_portal=True` only when the dataset really contains commune-level
-rows. If the exact LUSTAT ID is still unknown, keep the `TODO_CONFIRM_*`
-placeholder and `status="needs_confirmation"`; the portal will list it as a
-TODO source but will not fake values.
+`commune_portal=True` datasets appear in the Commune Portal, the commune
+comparison mode, and the fastest-changing-communes ranking automatically.
 
-## Adding A Curated Chart
+## How to add a new analysis card
 
-The fastest way to add a new statistic to a topic page is to add a `Concept`
-to `src/concepts.py`:
+Add an `AnalysisCard` to `src/data/analysis_cards.py`. Each card needs a
+`title`, plain `blurb`, `topic`, `difficulty`, `icon`, a `section`
+(`popular` / `comparison` / `commune` / `changes`), and **either** a
+`concept_id` (opens that chart inline) **or** a `page` path (routes there).
+`card_validation_issues()` and the tests check that every card resolves.
 
-1. Confirm the official LUSTAT dataflow ID against the live SDMX API or the
-   Dataset Explorer. Only confirmed IDs belong in `concepts.py`.
-2. Add a `Concept(...)` entry: friendly `title`, plain `description`, a
-   matching `topic`, everyday `keywords`, the `dataset_id`, a `chart` type
-   (`line` or `ranked_bar`), a `value_format`, and an `explanation`.
-3. Set `series_dim`, `default_series`, `series_labels`, and `filters` so the
-   chart shows the right, readable slice of the data.
-4. Set `popular=True` to surface it on the home page. The topic page picks it
-   up automatically via `concepts_for_topic(topic)`.
+## How to refresh data
 
-Unconfirmed candidate datasets stay in `src/catalog.py` with `TODO_CONFIRM_*`
-IDs and power only the advanced Dataset Explorer. Do not invent dataset IDs.
+- Dataflow list: refresh button in the Dataset Explorer.
+- Dataset contents: open a dataset in the Dataset Explorer and fetch/refresh.
+- Cache location: `data/cache/lustat.duckdb` plus CSVs in `data/cache/csv/`.
 
-Catalog entries should describe the dataset in normal language: title, theme, description, likely filters, geography, update frequency, dashboard fit, and caveats. The Dataset Explorer shows these fields before users need to inspect raw LUSTAT codes.
-The catalog tests check that unconfirmed entries keep the `TODO_CONFIRM_*` prefix, themes match the app navigation, and placeholder dashboards have at least one matching catalog entry.
+## Map views
 
-## Refreshing Data
+Map views are deliberately honest: the app never fakes a map. Drop a commune
+boundary GeoJSON at `data/geography/communes.geojson` (with a `name` property
+per feature) and the Commune Portal map lights up automatically. Until then it
+shows a clear "boundary data has not been connected" message.
 
-- Dataflow list: use the refresh button in the Salaries page or Dataset Explorer.
-- Dataset contents: open a dataset and click the fetch/refresh button.
-- Cache location: `data/cache/lustat.duckdb` plus CSV files in `data/cache/csv/`.
+## Deployment
 
-## Tests
+Deployable on Streamlit Community Cloud with no changes:
 
-```bash
-python -m compileall app.py pages src tests
-pytest
-./scripts/test_app.sh
-```
+1. Keep `app.py` at the repository root.
+2. Keep dependencies in `requirements.txt`.
 
-`scripts/test_app.sh` runs compile checks, pytest, core Streamlit import checks,
-and optional browser tests when Playwright is installed. Browser tests are
-local/dev-only and are not required for Streamlit deployment:
+Cached data is local to the running environment; use the in-app refresh
+buttons to update it.
 
-```bash
-pip install playwright
-playwright install chromium
-pytest tests/e2e
-```
+## Known limitations / TODOs
 
-## Automated UX Refactor Loop
+- **Commune boundary GeoJSON is not bundled.** Map views show an honest empty
+  state until `data/geography/communes.geojson` is connected. Official LAU
+  commune boundaries are available from the Luxembourg geoportal /
+  data.public.lu.
+- **Several catalog datasets still need confirmed LUSTAT IDs** — rents,
+  education, mobility, public finance and economy keep `TODO_CONFIRM_*`
+  placeholders in `src/catalog.py` and are not charted.
+- The housing commune metric (`DSD_CENSUS_NB_LOG_CLA@DF_B1707`) is a census
+  **dwelling count**, not a rent or sale-price estimate. Confirmed
+  commune-level rent / property-price tables should be added when available.
+- "Recently updated" timestamps reflect when a dataset was last cached on the
+  running deployment, not an official STATEC publication date.
 
-`run_codex_refactor_loop.sh` runs repeated Codex improvement cycles focused on UX/UI polish, commits each passing cycle, and pushes to GitHub by default so Streamlit Community Cloud can redeploy the connected branch.
+## Dataset IDs / commune mappings to confirm manually
 
-```bash
-STREAMLIT_APP_URL=https://your-app.streamlit.app ./run_codex_refactor_loop.sh
-```
+Confirmed commune-level LUSTAT tables wired into the Commune Portal:
 
-Useful controls:
+- `DF_X021` — Population by canton and municipality.
+- `DF_X020` — Population density by canton and municipality on 1 January.
+- `DF_C1600` — Monthly salaries by municipality (Median indicator).
+- `DF_X026` — Employment and unemployment by canton and municipality
+  (unemployment-rate indicator).
+- `DSD_CENSUS_NB_LOG_CLA@DF_B1707` — Census dwellings by canton and
+  municipality (totals).
+- `DSD_CENSUS_MENAGE_PV@DF_B1703` — Census private households by canton and
+  municipality (total household size).
 
-- Stop after the current cycle: `touch STOP_AGENT`
-- Run one cycle only: `MAX_CYCLES=1 SLEEP_SECONDS=0 ./run_codex_refactor_loop.sh`
-- Disable pushing: `AUTO_PUSH=0 ./run_codex_refactor_loop.sh`
-- Disable committing: `AUTO_COMMIT=0 ./run_codex_refactor_loop.sh`
-
-The loop reads its UX instructions from `AGENT_TASK.md`. Keep that file focused on visible product improvements so the automation continues to prioritize the user experience over broad refactors.
-
-## Roadmap
-
-- Confirm official dataset IDs for rents, population by commune, education,
-  mobility, and public finance, then add them as curated concepts.
-- Confirm exact STATEC / LUSTAT mappings for commune-level rent and sale-price
-  tables if/when they are available in LUSTAT. The current housing metric is a
-  census dwelling count, not a rent or property-price estimate.
-- Add beginner-friendly in-page filters (year range, commune) to topic charts.
-- Add richer metadata ingestion from LUSTAT structures where practical.
-- Add map support after commune boundary data is selected and documented.
+Still to confirm: official LUSTAT IDs for commune-level **rents** and
+**sale prices**, **education**, **mobility**, **public finance**, and headline
+**economy** indicators. The commune list is the 100 current Luxembourg
+communes from Luxembourg geoportal administrative metadata (checked May 2026).

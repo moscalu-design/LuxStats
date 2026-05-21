@@ -6,6 +6,7 @@ import streamlit as st
 from src.data.commune_portal import get_commune_profile
 from src.data.communes import commune_suggestions, list_communes, normalize_commune_name
 from src.ui.commune_components import render_all_data_table, render_section_items
+from src.ui.maps import render_commune_map, render_map_empty_state
 from src.ui_components import configure_page, download_csv, page_hero, render_sidebar, section_header
 
 configure_page("LuxStats - Commune Portal")
@@ -81,7 +82,7 @@ if profile["ready_count"] == 0:
         "The portal is ready for official local datasets once their exact STATEC / LUSTAT mappings are confirmed or fetched in the Dataset Explorer."
     )
 
-tabs = st.tabs(["Overview", "Population", "Housing", "Salaries", "Labour", "All data", "Sources"])
+tabs = st.tabs(["Overview", "Population", "Housing", "Salaries", "Labour", "Map", "All data", "Sources"])
 
 with tabs[0]:
     section_header("Overview", "The best available local indicators for this commune.")
@@ -107,6 +108,27 @@ with tabs[4]:
     render_section_items("Labour Market", profile["sections"].get("Labour Market", []), "labour")
 
 with tabs[5]:
+    section_header("Map view", "Commune-level metrics on a map of Luxembourg.")
+    ranked = next(
+        (item for item in profile["loaded_datasets"]
+         if item.get("status") == "ready"
+         and (item.get("rank") or {}).get("ranking") is not None),
+        None,
+    )
+    if ranked is None:
+        st.info("No commune-level ranking is available to place on a map yet.")
+        render_map_empty_state()
+    else:
+        ranking = ranked["rank"]["ranking"]
+        st.caption(f"Showing: {ranked['dataset'].title}")
+        render_commune_map(
+            ranking,
+            name_col=ranking.columns[0],
+            value_col=ranked["dataset"].value_column,
+            title=ranked["dataset"].title,
+        )
+
+with tabs[6]:
     render_all_data_table(profile)
     commune_frames = [
         item["rows"].assign(DATASET_ID=item["dataset"].dataset_id, DATASET_TITLE=item["dataset"].title)
@@ -117,7 +139,7 @@ with tabs[5]:
         combined = pd.concat(commune_frames, ignore_index=True, sort=False)
         download_csv(combined, f"{profile['commune']}_all_commune_data.csv", "Download all available commune data")
 
-with tabs[6]:
+with tabs[7]:
     section_header("Source details")
     source_rows = pd.DataFrame(profile["available_datasets"])
     if source_rows.empty:

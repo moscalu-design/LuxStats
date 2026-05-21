@@ -52,11 +52,11 @@ _FALLBACK_INTRO = ("📊", "Statistics", "Explore official Luxembourg statistics
 
 # Cross-topic navigation shown at the foot of every topic page.
 _NAV: list[tuple[str, str, str, str]] = [
-    ("Housing", "pages/2_Housing.py", "Housing", "🏠"),
-    ("Salaries", "pages/3_Salaries.py", "Salaries", "💶"),
-    ("Population", "pages/4_Population.py", "Population", "👥"),
-    ("Labour Market", "pages/5_Labour_Market.py", "Jobs & unemployment", "🧰"),
-    ("Prices & Inflation", "pages/6_Prices_Inflation.py", "Prices & inflation", "📈"),
+    ("Housing", "pages/6_Housing.py", "Housing", "🏠"),
+    ("Salaries", "pages/7_Salaries.py", "Salaries", "💶"),
+    ("Population", "pages/8_Population.py", "Population", "👥"),
+    ("Labour Market", "pages/9_Labour_Market.py", "Jobs & unemployment", "🧰"),
+    ("Prices & Inflation", "pages/10_Prices_Inflation.py", "Prices & inflation", "📈"),
 ]
 
 
@@ -71,7 +71,7 @@ def render_topic_page(topic: str) -> None:
             "Curated charts for this topic are still being prepared. In the "
             "meantime you can search every official dataset in the Dataset Explorer."
         )
-        st.page_link("pages/7_Dataset_Explorer.py", label="Open the Dataset Explorer", icon="🔎")
+        st.page_link("pages/11_Dataset_Explorer.py", label="Open the Dataset Explorer", icon="🔎")
         return
 
     if len(concepts) > 1:
@@ -85,7 +85,20 @@ def render_topic_page(topic: str) -> None:
         render_concept(concept, key=f"topic_{concept.id}")
 
     st.divider()
+    _render_go_deeper()
     _render_more_topics(topic)
+
+
+def _render_go_deeper() -> None:
+    """Point users at the comparison and chart-builder tools."""
+    section_header("Go deeper")
+    left, right = st.columns(2)
+    with left:
+        st.page_link("pages/4_Compare.py", label="Compare sectors, groups or communes",
+                     icon="📊", use_container_width=True)
+    with right:
+        st.page_link("pages/2_Build_a_Chart.py", label="Build your own chart",
+                     icon="🛠️", use_container_width=True)
 
 
 def _render_more_topics(current: str) -> None:

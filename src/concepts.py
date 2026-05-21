@@ -38,12 +38,23 @@ class Concept:
     caveat: str = ""                 # honest caveat about the data
     recommended: bool = True
     popular: bool = False            # show on the home "popular charts" row
+    difficulty: str = "beginner"     # "beginner" or "intermediate"
+    geographic_level: str = "national"  # national / commune / region / unknown
 
     @property
     def search_text(self) -> str:
         return " ".join(
             [self.title, self.description, self.topic, " ".join(self.keywords)]
         ).lower()
+
+    @property
+    def chart_label(self) -> str:
+        """Plain-language name of the recommended chart type."""
+        return {
+            "line": "Trend line",
+            "ranked_bar": "Ranking",
+            "bar": "Bar chart",
+        }.get(self.chart, "Chart")
 
 
 # --------------------------------------------------------------------------
