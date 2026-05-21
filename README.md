@@ -120,6 +120,16 @@ only the advanced Dataset Explorer. Once an ID is confirmed, either promote it
 to a `Concept` (for curated charts) or set `status="confirmed"` with a real
 `dataset_id`. Never invent dataset IDs.
 
+### STATEC publication Excel files
+
+Some headline statistics — notably housing **sale prices** — are published by
+STATEC as Excel workbooks rather than through the LUSTAT SDMX API.
+`src/data/excel_sources.py` downloads and parses these into the same tidy
+`TIME_PERIOD / OBS_VALUE / SPECIFICATION` shape, and `get_dataset()` routes any
+dataset id prefixed `STATEC_XLS_` to it. A `Concept` then charts it like any
+other. Currently wired: the D4011 house price index and average apartment
+prices (publication *Logement en chiffres*).
+
 ## How to add commune-level support
 
 Add a confirmed commune-level `CatalogEntry` in `src/catalog.py`:
@@ -185,9 +195,15 @@ buttons to update it.
 - **Several catalog datasets still need confirmed LUSTAT IDs** — rents,
   education, mobility, public finance and economy keep `TODO_CONFIRM_*`
   placeholders in `src/catalog.py` and are not charted.
+- **Housing sale prices are national only.** The D4011 house price index and
+  average apartment prices are connected (`src/data/excel_sources.py`), but
+  STATEC publishes them at national level. Commune-level sale prices and
+  **rents** are still not connected — add them when an official source is
+  identified.
 - The housing commune metric (`DSD_CENSUS_NB_LOG_CLA@DF_B1707`) is a census
-  **dwelling count**, not a rent or sale-price estimate. Confirmed
-  commune-level rent / property-price tables should be added when available.
+  **dwelling count**, not a price estimate.
+- Housing-price quarterly figures are averaged to a yearly value for the
+  curated charts; the full quarterly detail is in each chart's advanced view.
 - "Recently updated" timestamps reflect when a dataset was last cached on the
   running deployment, not an official STATEC publication date.
 
@@ -205,7 +221,11 @@ Confirmed commune-level LUSTAT tables wired into the Commune Portal:
 - `DSD_CENSUS_MENAGE_PV@DF_B1703` — Census private households by canton and
   municipality (total household size).
 
-Still to confirm: official LUSTAT IDs for commune-level **rents** and
+National housing **sale-price** data is sourced from the STATEC publication
+*Logement en chiffres* (Excel file D4011): the house price index and average
+apartment prices, quarterly from 2017.
+
+Still to confirm: official sources for commune-level **rents** and
 **sale prices**, **education**, **mobility**, **public finance**, and headline
 **economy** indicators. The commune list is the 100 current Luxembourg
 communes from Luxembourg geoportal administrative metadata (checked May 2026).

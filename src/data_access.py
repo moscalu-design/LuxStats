@@ -5,11 +5,16 @@ from __future__ import annotations
 import pandas as pd
 
 from src.cache import fetch_and_cache_dataset, is_dataset_cached, load_dataset, load_dataflows
+from src.data.excel_sources import get_excel_dataset, is_excel_dataset
 from src.statec_client import Dataflow, StatecClient
 from src.transforms import normalize_columns
 
 
 def get_dataset(dataset_id: str, refresh: bool = False) -> pd.DataFrame:
+    # STATEC publication Excel files (e.g. housing sale prices) are served
+    # from src.data.excel_sources rather than the LUSTAT SDMX API.
+    if is_excel_dataset(dataset_id):
+        return normalize_columns(get_excel_dataset(dataset_id, refresh=refresh))
     client = StatecClient()
     flows = load_dataflows(client)
     flow = next((item for item in flows if item.id == dataset_id), None)

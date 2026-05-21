@@ -14,6 +14,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
+from src.data.excel_sources import AVERAGE_PRICES_ID, HOUSE_PRICE_INDEX_ID
+
 
 @dataclass(frozen=True)
 class Concept:
@@ -209,6 +211,56 @@ CONCEPTS: list[Concept] = [
         "Qualified workers are entitled to a higher rate than unskilled workers.",
         unit_note="Monthly social minimum wage, in euros.",
         caveat="Gross monthly amounts. Rates are indexed and updated periodically.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="house_price_index",
+        title="House prices over time",
+        description="The official house price index — how the cost of buying "
+        "a home has changed, for houses and apartments.",
+        topic="Housing",
+        keywords=["housing prices", "house prices", "property prices", "home prices",
+                  "real estate prices", "cost of buying a home", "price index",
+                  "housing market", "what are housing prices doing", "expensive homes"],
+        dataset_id=HOUSE_PRICE_INDEX_ID,
+        chart="line",
+        value_format="index",
+        series_dim="SPECIFICATION",
+        default_series=["All dwellings", "Existing houses", "Existing apartments",
+                        "New dwellings"],
+        explanation="The house price index tracks how much homes cost to buy, "
+        "with 2015 set to 100. A rising line means homes are getting more "
+        "expensive. Prices fell sharply in 2023 before levelling off.",
+        unit_note="Price index, base 100 in 2015. Quarterly figures, averaged by year.",
+        caveat="Official STATEC acquisition-price statistics for dwellings "
+        "(publication D4011). Quarterly data is averaged to a yearly figure "
+        "here; quarterly detail is in the advanced view.",
+        recommended=True,
+        popular=True,
+    ),
+    Concept(
+        id="apartment_prices",
+        title="Average apartment prices",
+        description="The average price of buying an apartment in Luxembourg, "
+        "in euros.",
+        topic="Housing",
+        keywords=["apartment prices", "flat prices", "how much is an apartment",
+                  "property prices", "housing prices", "cost of an apartment",
+                  "real estate", "buy a flat", "apartment cost"],
+        dataset_id=AVERAGE_PRICES_ID,
+        chart="line",
+        value_format="euro",
+        series_dim="SPECIFICATION",
+        default_series=["All apartments", "Existing apartments", "New apartments"],
+        explanation="The average sale price of an apartment, across all sizes. "
+        "‘New’ apartments are sold before or during construction; ‘existing’ "
+        "apartments are resales.",
+        unit_note="Average sale price in euros, all apartment sizes combined. "
+        "Quarterly figures, averaged by year.",
+        caveat="Official STATEC acquisition-price statistics (publication "
+        "D4011). An average mixes small and large apartments, so it moves with "
+        "the size mix as well as with prices.",
         recommended=True,
         popular=False,
     ),
