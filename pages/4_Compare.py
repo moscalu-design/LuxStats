@@ -14,18 +14,15 @@ from src.analysis.comparison import (
 from src.concepts import get_concept
 from src.metadata import get_dataset_metadata
 from src.ui.explanations import render_chart_explanation
+from src.ui.page_header import render_page_header
 from src.ui.source_badges import render_source_expander
-from src.ui_components import configure_page, download_csv, page_hero, render_sidebar, section_header
+from src.ui.time_controls import apply_time_filter, render_time_controls
+from src.ui_components import configure_page, download_csv, render_sidebar, section_header
 
 configure_page("LuxStats - Compare")
 render_sidebar()
 
-page_hero(
-    "Compare",
-    "Put places, sectors and trends side by side",
-    "Compare communes head to head, or compare sectors and groups within one "
-    "statistic. Sensible defaults are chosen for you — adjust as you like.",
-)
+render_page_header("compare")
 
 mode = st.radio(
     "What do you want to compare?",
@@ -74,12 +71,13 @@ if mode == "Compare communes":
         )
         st.stop()
 
-    years = _years(df)
-    if years:
+    if _years(df):
         section_header("Step 3 — Choose a time period")
-        lo, hi = st.slider("Years", years[0], years[1], years,
-                           label_visibility="collapsed")
-        df = df[(df["Year"] >= lo) & (df["Year"] <= hi)]
+        selection = render_time_controls(df, "Year", f"compare_communes_{dataset.dataset_id}")
+        df = apply_time_filter(df, "Year", selection)
+        if df.empty:
+            st.info("No data exists for the selected period. Choose a wider range.")
+            st.stop()
 
     section_header(dataset.title)
     fig = render_comparison_chart(df, value_format="number", chart="line",
@@ -128,12 +126,13 @@ else:
         st.info("No comparable data was returned for this selection.")
         st.stop()
 
-    years = _years(df)
-    if years:
+    if _years(df):
         section_header("Step 3 — Choose a time period")
-        lo, hi = st.slider("Years", years[0], years[1], years,
-                           label_visibility="collapsed")
-        df = df[(df["Year"] >= lo) & (df["Year"] <= hi)]
+        selection = render_time_controls(df, "Year", f"compare_groups_{concept.id}")
+        df = apply_time_filter(df, "Year", selection)
+        if df.empty:
+            st.info("No data exists for the selected period. Choose a wider range.")
+            st.stop()
 
     chart_type = st.radio("Chart type", ["Line", "Bar"], horizontal=True)
     section_header(concept.title)

@@ -7,6 +7,7 @@ import streamlit as st
 
 from src.charts import line_chart, ranked_bar_chart
 from src.formatting import format_delta, format_value
+from src.ui.time_controls import apply_time_filter, render_time_controls
 from src.ui_components import download_csv, section_header
 
 
@@ -37,6 +38,11 @@ def render_commune_trend(item: dict, key: str) -> None:
     )
     if chart_df.empty:
         st.info("There is no chartable value for this commune in this dataset.")
+        return
+    selection = render_time_controls(chart_df, dataset.time_column, f"{key}_commune")
+    chart_df = apply_time_filter(chart_df, dataset.time_column, selection)
+    if chart_df.empty:
+        st.info("No data exists for the selected period. Choose a wider range.")
         return
     fig = line_chart(chart_df, dataset.time_column, dataset.value_column, title="How this commune changed over time")
     fig.update_xaxes(title_text="")

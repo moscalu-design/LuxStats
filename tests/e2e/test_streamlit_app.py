@@ -82,5 +82,5 @@ def test_home_search_and_commune_portal(streamlit_server: str) -> None:
         expect(page.get_by_text("Hesperange commune profile")).to_be_visible()
         page.get_by_role("button", name="Open commune profile").click()
         expect(page.get_by_text("Choose a commune and explore local statistics in one place.")).to_be_visible(timeout=30000)
-        expect(page.get_by_text("Hesperange")).to_be_visible()
+        expect(page.get_by_role("heading", name="Hesperange")).to_be_visible()
         browser.close()

@@ -18,11 +18,13 @@ from src.analysis.comparison import (
 from src.charts import line_chart, ranked_bar_chart, style_value_axis
 from src.concept_view import build_series
 from src.concepts import Concept, concepts_for_topic, get_concept, topics_with_concepts
+from src.data.source_visualization import get_chart_ready_sources, get_sources_needing_mapping
 from src.data_access import get_dataset
 from src.formatting import format_value
 from src.metadata import get_dataset_metadata
 from src.ui.explanations import render_chart_explanation
 from src.ui.source_badges import render_source_expander
+from src.ui.time_controls import apply_time_filter, render_time_controls
 from src.ui_components import download_csv
 
 # Topics offered in the builder, in product order. Only topics with curated
@@ -42,6 +44,11 @@ def get_topics() -> list[str]:
 def get_metrics_for_topic(topic: str) -> list[Concept]:
     """Curated metrics available for a topic."""
     return concepts_for_topic(topic)
+
+
+def get_chart_ready_source_options(topic: str | None = None) -> list[dict]:
+    """Chart-ready visualization-index entries that can be safely surfaced."""
+    return get_chart_ready_sources(topic)
 
 
 def get_available_filters(metric_id: str) -> dict[str, object]:
@@ -97,19 +104,50 @@ def render_chart_builder() -> None:
         st.info("No curated metrics are available to build a chart from yet.")
         return
 
+    mode = st.radio(
+        "Mode",
+        ["Beginner: curated metrics", "Advanced: all chart-ready sources"],
+        horizontal=True,
+    )
+
     st.markdown("**Step 1 — Choose a topic**")
     topic = st.selectbox("Topic", topics, label_visibility="collapsed")
 
-    metrics = get_metrics_for_topic(topic)
-    if not metrics:
-        st.info("This topic is ready in the interface, but no supported "
-                "dataset has been connected yet.")
-        return
+    if mode.startswith("Advanced"):
+        ready_sources = get_chart_ready_source_options(topic)
+        mapped_sources = [row for row in ready_sources if row.get("mapped_metric_id")]
+        pending_sources = get_sources_needing_mapping(topic)
+        if mapped_sources:
+            source = st.selectbox(
+                "Chart-ready source",
+                mapped_sources,
+                format_func=lambda row: row.get("title", "Official source"),
+            )
+            metric_id = source.get("mapped_metric_id")
+            metric = get_concept(metric_id) if metric_id else None
+            if metric is None:
+                st.info("This chart-ready source opens in another page, such as Commune Portal or Compare.")
+                return
+        else:
+            st.info("No chart-ready source mappings exist for this topic yet.")
+            metric = None
+        if pending_sources:
+            with st.expander("Available sources that still need mapping", expanded=False):
+                for row in pending_sources[:8]:
+                    st.write(f"- **{row['title']}** — {row['recommended_action']}")
+        if metric is None:
+            return
+    else:
+        metrics = get_metrics_for_topic(topic)
+        if not metrics:
+            st.info("This topic is ready in the interface, but no supported "
+                    "dataset has been connected yet.")
+            return
 
-    st.markdown("**Step 2 — Choose a metric**")
-    metric = st.selectbox(
-        "Metric", metrics, format_func=lambda c: c.title, label_visibility="collapsed"
-    )
+        st.markdown("**Step 2 — Choose a metric**")
+        metric = st.selectbox(
+            "Metric", metrics, format_func=lambda c: c.title, label_visibility="collapsed"
+        )
 
     filters = get_available_filters(metric.id)
     series_options = filters["series"]
@@ -122,16 +160,7 @@ def render_chart_builder() -> None:
             label_visibility="collapsed",
         )
 
-    time_range = None
-    years = filters["years"]
-    if years and years[0] < years[1]:
-        st.markdown("**Step 4 — Choose a time period**")
-        time_range = st.slider(
-            "Years", min_value=years[0], max_value=years[1],
-            value=years, label_visibility="collapsed",
-        )
-
-    st.markdown("**Step 5 — Choose a chart type**")
+    st.markdown("**Step 4 — Choose a chart type**")
     chart_type = st.radio(
         "Chart type", _chart_choices(metric), horizontal=True,
         label_visibility="collapsed",
@@ -140,7 +169,7 @@ def render_chart_builder() -> None:
     selection = {
         "metric_id": metric.id,
         "series": selected_series,
-        "time_range": time_range,
+        "time_range": None,
     }
     with st.spinner("Building your chart from official figures…"):
         df = build_chart_from_selection(selection)
@@ -149,6 +178,13 @@ def render_chart_builder() -> None:
     if df.empty:
         st.info("No chartable data was returned for this selection. Try a wider "
                 "time period or different items to compare.")
+        return
+
+    st.markdown("**Time period**")
+    selection_control = render_time_controls(df, "Year", f"builder_{metric.id}")
+    df = apply_time_filter(df, "Year", selection_control)
+    if df.empty:
+        st.info("No data exists for the selected period. Choose a wider range.")
         return
 
     st.markdown(f"#### {metric.title}")

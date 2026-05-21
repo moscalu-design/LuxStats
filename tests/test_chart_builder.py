@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from src.ui.chart_builder import (
     build_chart_from_selection,
+    get_chart_ready_source_options,
     get_metrics_for_topic,
     get_topics,
 )
@@ -23,3 +24,9 @@ def test_build_chart_handles_unknown_metric() -> None:
 def test_build_chart_handles_missing_metric_id() -> None:
     df = build_chart_from_selection({})
     assert df.empty
+
+
+def test_advanced_builder_exposes_chart_ready_sources() -> None:
+    sources = get_chart_ready_source_options()
+    assert sources
+    assert all(row["visualization_status"] == "chart_ready" for row in sources)

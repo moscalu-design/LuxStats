@@ -12,14 +12,16 @@ from src.analysis.changes import (
 from src.analysis.comparison import get_commune_comparison_metrics
 from src.charts import ranked_bar_chart
 from src.data.source_catalog import get_recent_publication_sources
+from src.data.source_mapping import high_priority_unmapped, source_coverage
 from src.ui.catalog_views import render_source_records
 from src.concepts import all_concepts
 from src.data_access import get_dataset
 from src.formatting import format_delta, format_value
+from src.ui.page_header import render_page_header
+from src.ui.time_controls import apply_time_filter, render_time_controls
 from src.ui_components import (
     configure_page,
     download_csv,
-    page_hero,
     render_sidebar,
     section_header,
 )
@@ -27,13 +29,7 @@ from src.ui_components import (
 configure_page("LuxStats - What Changed")
 render_sidebar()
 
-page_hero(
-    "What Changed?",
-    "The latest official figures, and the biggest recent moves",
-    "Every number on this page is calculated from real cached data. Where the "
-    "data does not support a calculation, the section says so — nothing is "
-    "invented.",
-)
+render_page_header("changes")
 
 # --------------------------------------------------------------------------
 section_header("Latest moves in key statistics",
@@ -117,6 +113,12 @@ else:
             st.code(str(exc))
 
     geo_col = dataset.geography_column or "GEO_LABEL"
+    if not raw.empty and dataset.time_column in raw.columns:
+        selection = render_time_controls(raw, dataset.time_column, f"changes_{dataset.dataset_id}", default="Last 5 years")
+        raw = apply_time_filter(raw, dataset.time_column, selection)
+        if raw.empty:
+            st.info("No data exists for the selected period. Choose a wider range.")
+            st.stop()
     increases = calculate_top_increases(raw, geo_col, dataset.value_column,
                                         dataset.time_column)
     decreases = calculate_top_decreases(raw, geo_col, dataset.value_column,
@@ -155,6 +157,33 @@ else:
         st.markdown(f"**Dataset ID:** `{dataset.dataset_id}`")
         st.markdown("**Source:** STATEC / LUSTAT")
         st.markdown(dataset.notes or "Official commune-level dataset.")
+
+st.divider()
+
+# --------------------------------------------------------------------------
+section_header("Watch list", "Priority topics with chart-ready metrics and mapping gaps.")
+watch_categories = [
+    ("Housing watch", "Housing"),
+    ("Inflation watch", "Prices / Inflation"),
+    ("Labour market watch", "Labour Market"),
+    ("Population watch", "Population"),
+]
+watch_cols = st.columns(4)
+for col, (label, category) in zip(watch_cols, watch_categories):
+    coverage = source_coverage(category)
+    with col:
+        st.metric(label, f"{coverage['chart_ready']} chart-ready", help=f"{coverage['total']} source(s) cataloged")
+        if coverage["unmapped_high_priority"]:
+            st.caption(f"{coverage['unmapped_high_priority']} high-priority source(s) need mapping.")
+
+with st.expander("High-priority source mapping gaps", expanded=False):
+    gaps = []
+    for _label, category in watch_categories:
+        gaps.extend(high_priority_unmapped(category, limit=5))
+    if not gaps:
+        st.success("No high-priority mapping gaps are currently flagged for the watch topics.")
+    else:
+        render_source_records(gaps, key_prefix="watch_gaps", limit=10)
 
 st.divider()
 

@@ -22,6 +22,7 @@ def test_expected_pages_are_present() -> None:
         "11_Dataset_Explorer.py",
         "12_About_Data.py",
         "13_Source_Library.py",
+        "14_Economy.py",
     }
     assert expected.issubset(PAGE_TEXT)
 
@@ -33,14 +34,14 @@ def test_topic_pages_render_topic_page() -> None:
 
 def test_dataset_explorer_has_friendly_failure_states() -> None:
     source = PAGE_TEXT["11_Dataset_Explorer.py"]
-    assert "Could not load dataflows" in source
-    assert "Fetch failed" in source
+    assert "Could not load the live LUSTAT dataflow list right now." in source
+    assert "This dataset could not be fetched right now." in source
     assert "No curated entries match" in source
 
 
 def test_commune_portal_has_required_tabs_and_downloads() -> None:
     source = PAGE_TEXT["3_Commune_Portal.py"]
-    for label in ["Overview", "Population", "Housing", "Salaries", "Labour", "Map", "All data", "Sources"]:
+    for label in ["Overview", "Population", "Housing", "Salaries", "Labour", "Compare", "Map", "All data", "Sources"]:
         assert label in source
     assert "Download all available commune data" in source
 
@@ -58,3 +59,12 @@ def test_no_llm_or_chatbot_feature_on_pages() -> None:
         lowered = source.lower()
         for token in banned:
             assert token not in lowered, f"{name} contains banned token {token!r}"
+
+
+def test_no_model_runtime_dependency() -> None:
+    """The production portal must not ship a model-backed query runtime."""
+    root = ROOT
+    assert not (root / "src" / "llm_planner.py").exists()
+    requirements = (root / "requirements.txt").read_text(encoding="utf-8").lower()
+    for token in ("anthropic", "openai"):
+        assert token not in requirements

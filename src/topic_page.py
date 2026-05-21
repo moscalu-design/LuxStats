@@ -13,8 +13,11 @@ import streamlit as st
 from src.concept_view import render_concept
 from src.concepts import concepts_for_topic
 from src.data.source_catalog import get_sources_by_category
-from src.ui.catalog_views import render_source_records
-from src.ui_components import page_hero, section_header
+from src.data.source_visualization import get_chart_ready_sources, get_sources_needing_mapping
+from src.ui.catalog_views import render_source_coverage_badges, render_source_records
+from src.ui.page_header import render_page_header
+from src.ui.source_visualizer import render_source_card
+from src.ui_components import section_header
 
 # Topic -> unified-catalog category, used to surface connected official sources.
 _TOPIC_CATEGORY: dict[str, str] = {
@@ -23,6 +26,7 @@ _TOPIC_CATEGORY: dict[str, str] = {
     "Population": "Population",
     "Labour Market": "Labour Market",
     "Prices & Inflation": "Prices / Inflation",
+    "Economy": "Economy / National Accounts",
 }
 
 # Plain-language framing for each topic page: (icon, headline, intro).
@@ -57,9 +61,25 @@ TOPIC_INTRO: dict[str, tuple[str, str, str]] = {
         "The cost of living in Luxembourg: consumer prices over time and how "
         "fast they rise each year.",
     ),
+    "Economy": (
+        "🏦",
+        "Luxembourg's economy",
+        "GDP, short-term indicators, business activity and other economic "
+        "signals. Chart-ready views are added only when the official source "
+        "is mapped safely.",
+    ),
 }
 
 _FALLBACK_INTRO = ("📊", "Statistics", "Explore official Luxembourg statistics for this topic.")
+
+_TOPIC_PAGE_ID = {
+    "Housing": "housing",
+    "Salaries": "salaries",
+    "Population": "population",
+    "Labour Market": "labour",
+    "Prices & Inflation": "prices",
+    "Economy": "economy",
+}
 
 # Cross-topic navigation shown at the foot of every topic page.
 _NAV: list[tuple[str, str, str, str]] = [
@@ -68,21 +88,34 @@ _NAV: list[tuple[str, str, str, str]] = [
     ("Population", "pages/8_Population.py", "Population", "👥"),
     ("Labour Market", "pages/9_Labour_Market.py", "Jobs & unemployment", "🧰"),
     ("Prices & Inflation", "pages/10_Prices_Inflation.py", "Prices & inflation", "📈"),
+    ("Economy", "pages/14_Economy.py", "Economy", "🏦"),
 ]
 
 
 def render_topic_page(topic: str) -> None:
     """Render a friendly, curated dashboard for one portal topic."""
-    icon, headline, intro = TOPIC_INTRO.get(topic, _FALLBACK_INTRO)
-    page_hero(f"{icon} Luxembourg statistics", headline, intro)
+    page_id = _TOPIC_PAGE_ID.get(topic)
+    if page_id:
+        render_page_header(page_id, eyebrow="Topic")
+    else:
+        icon, headline, intro = TOPIC_INTRO.get(topic, _FALLBACK_INTRO)
+        st.title(f"{icon} {headline}")
+        st.caption(intro)
 
     concepts = concepts_for_topic(topic)
     if not concepts:
         st.info(
-            "Curated charts for this topic are still being prepared. In the "
-            "meantime you can search every official dataset in the Dataset Explorer."
+            "Chart-ready metrics for this topic are still being mapped. The "
+            "official sources are cataloged below, but they are kept out of "
+            "beginner charts until the mapping is confirmed."
         )
-        st.page_link("pages/11_Dataset_Explorer.py", label="Open the Dataset Explorer", icon="🔎")
+        category = _TOPIC_CATEGORY.get(topic)
+        if category:
+            render_source_coverage_badges(category, label=f"{topic} coverage")
+            sources = get_sources_by_category(category)
+            with st.expander("Official sources not yet mapped to charts", expanded=True):
+                render_source_records(sources, key_prefix=f"unmapped_{topic}", limit=8)
+        st.page_link("pages/13_Source_Library.py", label="Open the Source Library", icon="🗂️")
         return
 
     if len(concepts) > 1:
@@ -92,13 +125,37 @@ def render_topic_page(topic: str) -> None:
             "and download the data.",
         )
 
+    category = _TOPIC_CATEGORY.get(topic)
+    if category:
+        render_source_coverage_badges(category, label=f"{topic} coverage")
+
     for concept in concepts:
         render_concept(concept, key=f"topic_{concept.id}")
 
     st.divider()
+    _render_chart_ready_sources(topic)
     _render_topic_sources(topic)
     _render_go_deeper()
     _render_more_topics(topic)
+
+
+def _render_chart_ready_sources(topic: str) -> None:
+    category = _TOPIC_CATEGORY.get(topic)
+    if not category:
+        return
+    ready = get_chart_ready_sources(category)
+    mapped_more = [row for row in ready if row.get("mapped_metric_id")]
+    if mapped_more:
+        with st.expander("More chart-ready source mappings", expanded=False):
+            st.caption("These official sources already have safe visualization routes in LuxStats.")
+            for row in mapped_more[:4]:
+                render_source_card(row, row, key=f"topic_ready_{row['source_id']}")
+    needs = get_sources_needing_mapping(category)
+    if needs:
+        with st.expander("Sources available but not mapped yet", expanded=False):
+            st.caption("These sources are official and relevant, but need confirmed columns, filters, or sheet mapping before charting.")
+            for row in needs[:6]:
+                render_source_card(row, row, key=f"topic_needs_{row['source_id']}")
 
 
 def _render_topic_sources(topic: str) -> None:

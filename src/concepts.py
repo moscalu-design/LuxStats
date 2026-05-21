@@ -311,6 +311,141 @@ CONCEPTS: list[Concept] = [
         recommended=True,
         popular=False,
     ),
+    Concept(
+        id="permits_by_canton",
+        title="New homes approved, by canton",
+        description="Where Luxembourg is clearing new dwellings for construction — "
+        "building permits by canton.",
+        topic="Housing",
+        keywords=["building permits", "construction", "new homes", "canton",
+                  "housing supply", "where is housing being built", "permits by region",
+                  "new dwellings", "real estate"],
+        dataset_id="DF_D4113",
+        chart="ranked_bar",
+        value_format="number",
+        series_dim="CANTON",
+        filters={"PRODUCT_BCS": "Residential buildings"},
+        freq="Annual",
+        explanation="Each bar counts the dwellings authorised by building permits in "
+        "that canton in the most recent year. Cantons with more permits are adding "
+        "more housing supply.",
+        unit_note="Number of dwellings authorised by building permits, residential "
+        "buildings, most recent year available.",
+        caveat="Permits are an early signal of supply; not every permit becomes a "
+        "finished home. ‘Luxembourg city’ is reported separately from the rest of "
+        "Canton Luxembourg.",
+        recommended=True,
+        popular=False,
+        geographic_level="region",
+    ),
+    Concept(
+        id="fertility_rate",
+        title="How many children per woman",
+        description="Luxembourg's total fertility rate — the average number of "
+        "children a woman would have over her lifetime.",
+        topic="Population",
+        keywords=["fertility", "birth rate", "children per woman",
+                  "total fertility rate", "births", "babies", "how many children"],
+        dataset_id="DF_B2207",
+        chart="line",
+        value_format="rate",
+        series_dim="SPECIFICATION",
+        default_series=["Total population", "Luxembourgers", "Foreigners"],
+        series_labels={"Total population": "All residents"},
+        freq="Annual",
+        explanation="The total fertility rate is the average number of children per "
+        "woman. A rate of about 2.1 keeps a population stable without migration; "
+        "Luxembourg has been below that for decades.",
+        unit_note="Average number of children per woman (total fertility rate).",
+        caveat="Before 2010 the breakdown follows the nationality of the child; "
+        "from 2010 it follows the nationality of the mother.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="wage_indexation",
+        title="Wage rises from automatic indexation",
+        description="How much the automatic wage indexation added to salaries and "
+        "pensions each year.",
+        topic="Prices & Inflation",
+        keywords=["indexation", "wage indexation", "échelle mobile", "index tranche",
+                  "cote d'application", "salary index", "cost of living adjustment",
+                  "tranche indiciaire", "indexed wages"],
+        dataset_id="DSD_PRIX_EMS@DF_E5200",
+        chart="line",
+        value_format="percent",
+        freq="Annual",
+        filters={"UNIT_MEASURE": "Annual variation"},
+        explanation="Luxembourg links pay to consumer prices. When average prices "
+        "rise 2.5 % since the last adjustment, an index ‘tranche’ is triggered and "
+        "salaries and pensions rise automatically. This shows the resulting wage "
+        "increase each year — higher points mean indexation lifted pay more.",
+        unit_note="Wage increase due to the automatic wage indexation, in percent "
+        "per year.",
+        caveat="Annual figure. It reflects past, published index adjustments and is "
+        "not a forecast of future indexation.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="vacancies_jobseekers",
+        title="Job vacancies and jobseekers",
+        description="Job vacancies received by ADEM compared with the number of "
+        "people registered as unemployed.",
+        topic="Labour Market",
+        keywords=["job vacancies", "jobseekers", "vacancies", "adem", "unemployed",
+                  "job offers", "unfilled vacancies", "is it hard to find a job",
+                  "labour demand"],
+        dataset_id="DF_B3201",
+        chart="line",
+        value_format="number",
+        series_dim="SPECIFICATION",
+        default_series=["Job vacancies received by ADEM", "Unfilled vacancies",
+                        "Unemployed"],
+        series_labels={
+            "Job vacancies received by ADEM": "Vacancies received (ADEM)",
+            "Unfilled vacancies": "Unfilled vacancies",
+            "Unemployed": "Registered unemployed",
+        },
+        freq="Annual",
+        explanation="More vacancies and fewer jobseekers point to a tighter job "
+        "market. The gap between unfilled vacancies and registered unemployed shows "
+        "how well the two sides of the market match.",
+        unit_note="Annual figures: job vacancies notified to ADEM and people "
+        "registered as unemployed.",
+        caveat="Covers vacancies notified to the public employment service (ADEM); "
+        "not every job is advertised through ADEM.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="gdp_trend",
+        title="The size of Luxembourg's economy",
+        description="Gross domestic product (GDP) in real terms — the total value "
+        "of what the economy produces.",
+        topic="Economy",
+        keywords=["gdp", "economy", "gross domestic product", "economic growth",
+                  "output", "national accounts", "how big is the economy",
+                  "recession"],
+        dataset_id="DF_E2601",
+        chart="line",
+        value_format="number",
+        series_dim="LABELS",
+        default_series=["Gross domestic product at market prices (B1*G)"],
+        series_labels={
+            "Gross domestic product at market prices (B1*G)": "GDP (real terms)",
+        },
+        explanation="GDP measures the total value of goods and services produced in "
+        "Luxembourg. It is shown here in real terms (chain-linked volumes), so the "
+        "trend reflects real growth rather than rising prices.",
+        unit_note="Quarterly GDP, chain-linked volumes (reference year 2015), in "
+        "million euros. The four quarters of each year are averaged to one point.",
+        caveat="Official STATEC quarterly national accounts. Quarterly figures are "
+        "averaged to a yearly point here; the most recent year may still be revised.",
+        recommended=True,
+        popular=False,
+        difficulty="intermediate",
+    ),
 ]
 
 CONCEPTS_BY_ID: dict[str, Concept] = {c.id: c for c in CONCEPTS}

@@ -8,8 +8,9 @@ from src.data.communes import commune_suggestions, list_communes, normalize_comm
 from src.ui.commune_components import render_all_data_table, render_section_items
 from src.ui.maps import render_commune_map, render_map_empty_state
 from src.data.source_catalog import get_commune_level_sources
-from src.ui.catalog_views import render_source_records
-from src.ui_components import configure_page, download_csv, page_hero, render_sidebar, section_header
+from src.ui.catalog_views import render_source_coverage_badges, render_source_records
+from src.ui.page_header import render_page_header
+from src.ui_components import configure_page, download_csv, render_sidebar, section_header
 
 configure_page("LuxStats - Commune Portal")
 render_sidebar()
@@ -27,12 +28,7 @@ def _initial_commune() -> str:
     return "Hesperange"
 
 
-page_hero(
-    "Commune Portal",
-    "Choose a commune and explore local statistics in one place.",
-    "A local profile dashboard for official commune-level STATEC / LUSTAT data. "
-    "If a topic is only available nationally, it stays out of the commune view.",
-)
+render_page_header("commune")
 
 all_communes = list_communes()
 default_commune = _initial_commune()
@@ -65,6 +61,7 @@ with st.spinner("Loading official commune-level datasets..."):
 
 st.markdown(f"## {profile['commune']}")
 st.caption(f"Local statistics profile · Canton: {profile.get('canton') or 'Not available'}")
+render_source_coverage_badges("Communes / Geography", label="Local-data coverage")
 
 metrics = profile["overview_metrics"][:4]
 cols = st.columns(4)
@@ -84,7 +81,7 @@ if profile["ready_count"] == 0:
         "The portal is ready for official local datasets once their exact STATEC / LUSTAT mappings are confirmed or fetched in the Dataset Explorer."
     )
 
-tabs = st.tabs(["Overview", "Population", "Housing", "Salaries", "Labour", "Map", "All data", "Sources"])
+tabs = st.tabs(["Overview", "Population", "Housing", "Salaries", "Labour", "Compare", "Map", "All data", "Sources"])
 
 with tabs[0]:
     section_header("Overview", "The best available local indicators for this commune.")
@@ -110,6 +107,11 @@ with tabs[4]:
     render_section_items("Labour Market", profile["sections"].get("Labour Market", []), "labour")
 
 with tabs[5]:
+    section_header("Compare this commune", "Put this commune next to other places using mapped local metrics.")
+    st.caption("The Compare page includes population, density, salary, unemployment, dwellings and household metrics where official commune-level data exists.")
+    st.page_link("pages/4_Compare.py", label="Open Compare", icon="📊", use_container_width=True)
+
+with tabs[6]:
     section_header("Map view", "Commune-level metrics on a map of Luxembourg.")
     ranked = next(
         (item for item in profile["loaded_datasets"]
@@ -130,7 +132,7 @@ with tabs[5]:
             title=ranked["dataset"].title,
         )
 
-with tabs[6]:
+with tabs[7]:
     render_all_data_table(profile)
     commune_frames = [
         item["rows"].assign(DATASET_ID=item["dataset"].dataset_id, DATASET_TITLE=item["dataset"].title)
@@ -141,7 +143,7 @@ with tabs[6]:
         combined = pd.concat(commune_frames, ignore_index=True, sort=False)
         download_csv(combined, f"{profile['commune']}_all_commune_data.csv", "Download all available commune data")
 
-with tabs[7]:
+with tabs[8]:
     section_header("Source details")
     source_rows = pd.DataFrame(profile["available_datasets"])
     if source_rows.empty:

@@ -18,7 +18,7 @@ import requests
 BASE_URL = "https://lustat.statec.lu/rest"
 AGENCY = "LU1"
 
-# SDMX-CSV 1.0 with both codes and labels — useful for downstream LLM/analytics
+# SDMX-CSV 1.0 with both codes and labels, useful for deterministic analytics.
 SDMX_CSV_ACCEPT = "application/vnd.sdmx.data+csv;version=1.0.0;labels=both"
 SDMX_XML_ACCEPT = "application/vnd.sdmx.structure+xml;version=2.1"
 

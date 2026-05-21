@@ -15,6 +15,7 @@ VALUE_FORMATS = {
     "euro": {"suffix": "", "prefix": "€", "decimals": 0, "tick": ",.0f"},
     "percent": {"suffix": "%", "prefix": "", "decimals": 1, "tick": ",.1f"},
     "index": {"suffix": "", "prefix": "", "decimals": 1, "tick": ",.1f"},
+    "rate": {"suffix": "", "prefix": "", "decimals": 2, "tick": ",.2f"},
     "m2": {"suffix": " m²", "prefix": "", "decimals": 0, "tick": ",.0f"},
 }
 

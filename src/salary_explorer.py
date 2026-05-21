@@ -1,9 +1,6 @@
-"""Existing salary/dataflow explorer, preserved as a portal page."""
+"""Deterministic salary/dataflow explorer, preserved as an advanced page."""
 
 from __future__ import annotations
-
-import json
-import os
 
 import duckdb
 import pandas as pd
@@ -18,11 +15,9 @@ from src.cache import (
     list_cached_datasets,
     load_dataset,
     load_dataflows,
-    schema_for_llm,
     table_name_for,
 )
 from src.charts import bar_chart, line_chart
-from src.llm_planner import plan_query
 from src.metadata import get_dataset_metadata
 from src.statec_client import SALARY_KEYWORDS, StatecClient, filter_salary_related
 from src.ui_components import data_source_info, download_csv
@@ -55,7 +50,7 @@ def render_salaries_page() -> None:
     if df is None or df.empty:
         return
     quick_chart_panel(flow.id, df)
-    with st.expander("Optional natural-language query", expanded=False):
+    with st.expander("Advanced deterministic query", expanded=False):
         query_panel(flow, df)
 
 
@@ -70,7 +65,9 @@ def salary_sidebar(client: StatecClient):
         try:
             flows = cached_dataflows(client, st.session_state["refresh_token"])
         except Exception as exc:
-            st.sidebar.error(f"Could not load dataflows: {exc}")
+            st.sidebar.error("Could not load live dataflows right now.")
+            with st.sidebar.expander("Advanced details", expanded=False):
+                st.code(str(exc))
             return None, []
 
     st.sidebar.write(f"**{len(flows)} dataflows** available from LU1")
@@ -120,7 +117,9 @@ def dataset_panel(client: StatecClient, flow) -> pd.DataFrame | None:
                     df, csv_path = fetch_and_cache_dataset(client, flow, force_refresh=True)
                     st.success(f"Cached {len(df):,} rows in {csv_path.name}")
                 except Exception as exc:
-                    st.error(f"Download failed: {exc}")
+                    st.error("This dataset could not be downloaded right now.")
+                    with st.expander("Advanced details", expanded=False):
+                        st.code(str(exc))
                     return None
     with col2:
         if cached and st.button("Clear from cache"):
@@ -186,41 +185,60 @@ def quick_chart_panel(dataset_id: str, df: pd.DataFrame) -> None:
 
 def query_panel(flow, df: pd.DataFrame) -> None:
     st.write(
-        "This optional tool turns a plain-language request into a structured plan, then DuckDB computes the result."
+        "Build a grouped table from the cached dataset. This is deterministic: "
+        "the selected columns become a validated DuckDB query."
     )
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        st.warning(
-            "No ANTHROPIC_API_KEY set, so the app uses a small fallback planner.",
-            icon="⚠️",
-        )
-
-    question = st.text_input(
-        "Question",
-        placeholder="Average wage by gender over time",
-        key=f"q_{flow.id}",
-    )
-    if not question:
+    if "OBS_VALUE" not in df.columns:
+        st.info("This dataset has no `OBS_VALUE` column to aggregate.")
         return
 
-    schema = schema_for_llm(flow.id)
-    with st.spinner("Planning query..."):
-        plan, source = plan_query(question, schema)
+    dimension_candidates = [col for col in df.columns if col != "OBS_VALUE"]
+    defaults = [col for col in ("TIME_PERIOD", "GENDER_LABEL", "SEX_LABEL", "NACE_REV2_LABEL") if col in dimension_candidates]
+    dimensions = st.multiselect(
+        "Group by",
+        dimension_candidates,
+        default=defaults[:2],
+        key=f"det_dims_{flow.id}",
+    )
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        aggregation = st.selectbox("Aggregation", ["avg", "sum", "median", "min", "max", "count"], key=f"det_agg_{flow.id}")
+    with col2:
+        chart_type = st.selectbox("Chart", ["table", "line", "bar"], key=f"det_chart_{flow.id}")
+    with col3:
+        limit = st.number_input("Row limit", min_value=10, max_value=5000, value=500, step=50, key=f"det_limit_{flow.id}")
 
-    st.markdown(f"**Plan source:** `{source}`")
-    if plan.get("explanation"):
-        st.write(plan["explanation"])
-
-    with st.expander("Technical plan", expanded=False):
-        st.code(json.dumps(plan, ensure_ascii=False, indent=2), language="json")
+    sort = []
+    if "TIME_PERIOD" in dimensions:
+        sort.append({"column": "TIME_PERIOD", "order": "asc"})
+    plan = {
+        "filters": {},
+        "dimensions": dimensions,
+        "measures": ["OBS_VALUE"],
+        "aggregation": aggregation,
+        "sort": sort,
+        "limit": int(limit),
+        "chart": {
+            "type": chart_type,
+            "x": dimensions[0] if dimensions else None,
+            "y": "OBS_VALUE",
+            "color": dimensions[1] if len(dimensions) > 1 else None,
+        },
+        "explanation": "Grouped official dataset query built from explicit controls.",
+    }
 
     try:
         result = execute_plan(plan, flow.id, list(df.columns))
     except Exception as exc:
-        st.error(f"Could not execute plan: {exc}")
+        st.error("Could not execute this query. Open advanced details for the technical error.")
+        with st.expander("Advanced details", expanded=False):
+            st.code(str(exc))
         return
 
     for warning in result.warnings:
         st.warning(warning)
+    with st.expander("Generated SQL", expanded=False):
+        st.code(result.sql, language="sql")
     st.dataframe(result.df, use_container_width=True, hide_index=True)
     if not result.df.empty:
         download_csv(result.df, f"{flow.id}_query.csv", "Download result")

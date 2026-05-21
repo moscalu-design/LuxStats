@@ -22,7 +22,7 @@ with st.container(border=True):
     st.markdown("#### 🔧 Advanced: salary data explorer")
     st.caption(
         "For power users: browse raw STATEC / LUSTAT salary datasets, run a "
-        "natural-language query, and export the underlying data."
+        "deterministic grouped query, and export the underlying data."
     )
     if st.toggle("Open the advanced salary explorer", value=False, key="salary_advanced"):
         render_salaries_page()

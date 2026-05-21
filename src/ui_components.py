@@ -11,14 +11,15 @@ import pandas as pd
 import streamlit as st
 
 from src.config import APP_TAGLINE, APP_TITLE, STATEC_SOURCE
+from src.ui.layout import render_app_sidebar
 
 
 def mirror_streamlit_secrets() -> None:
-    """Expose Streamlit Cloud secrets as env vars for optional integrations."""
+    """Reserved hook for non-sensitive Streamlit Cloud configuration."""
     try:
-        for key in ("ANTHROPIC_API_KEY", "ANTHROPIC_MODEL"):
-            if key in st.secrets and not os.environ.get(key):
-                os.environ[key] = str(st.secrets[key])
+        # The app is intentionally deterministic and does not mirror API keys.
+        # Keep this hook so older deployments that import it do not break.
+        os.environ.setdefault("LUXSTATS_STREAMLIT", "1")
     except Exception:
         pass
 
@@ -77,6 +78,23 @@ def inject_style() -> None:
             line-height: 1.55;
             max-width: 760px;
             margin-bottom: 0;
+        }
+        .lux-page-header {
+            border-bottom: 1px solid var(--lux-line);
+            padding: .15rem 0 1rem 0;
+            margin-bottom: 1.1rem;
+        }
+        .lux-page-header h1 {
+            font-size: clamp(1.9rem, 4vw, 3rem);
+            line-height: 1.08;
+            margin: 0 0 .45rem 0;
+        }
+        .lux-page-header p {
+            color: var(--lux-muted);
+            font-size: 1.05rem;
+            line-height: 1.45;
+            max-width: 820px;
+            margin: 0;
         }
         .lux-card {
             border: 1px solid var(--lux-line);
@@ -212,30 +230,7 @@ def inject_style() -> None:
 
 
 def render_sidebar() -> None:
-    st.sidebar.title("📊 LuxStats")
-    st.sidebar.caption(APP_TAGLINE)
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**Explore**")
-    st.sidebar.page_link("app.py", label="Home", icon="🏠")
-    st.sidebar.page_link("pages/1_Find_a_Statistic.py", label="Find a Statistic", icon="🔍")
-    st.sidebar.page_link("pages/2_Build_a_Chart.py", label="Build a Chart", icon="🛠️")
-    st.sidebar.page_link("pages/3_Commune_Portal.py", label="Commune Portal", icon="📍")
-    st.sidebar.page_link("pages/4_Compare.py", label="Compare", icon="📊")
-    st.sidebar.page_link("pages/5_What_Changed.py", label="What Changed?", icon="🆕")
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**Browse by topic**")
-    st.sidebar.page_link("pages/6_Housing.py", label="Housing", icon="🏠")
-    st.sidebar.page_link("pages/7_Salaries.py", label="Salaries", icon="💶")
-    st.sidebar.page_link("pages/8_Population.py", label="Population", icon="👥")
-    st.sidebar.page_link("pages/9_Labour_Market.py", label="Jobs & unemployment", icon="🧰")
-    st.sidebar.page_link("pages/10_Prices_Inflation.py", label="Prices & inflation", icon="📈")
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("**For advanced users**")
-    st.sidebar.page_link("pages/11_Dataset_Explorer.py", label="Dataset Explorer", icon="🔎")
-    st.sidebar.page_link("pages/13_Source_Library.py", label="Source Library", icon="🗂️")
-    st.sidebar.page_link("pages/12_About_Data.py", label="About the data", icon="ℹ️")
-    st.sidebar.markdown("---")
-    st.sidebar.caption("All figures come from official STATEC / LUSTAT statistics.")
+    render_app_sidebar()
 
 
 def section_header(title: str, subtitle: str = "") -> None:
