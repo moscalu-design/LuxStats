@@ -1,14 +1,14 @@
 # Source Visualization Index
 
-Generated: 2026-05-21T12:22:57+00:00
+Generated: 2026-05-21T12:28:02+00:00
 
 ## Summary
 
 - Total sources: 1,396
-- Chart-ready: 24
+- Chart-ready: 27
 - Preview-ready: 0
 - Downloadable only: 0
-- Needs mapping: 639
+- Needs mapping: 636
 - Needs manual review: 451
 - Not chartable: 0
 - Low priority / archived: 282
@@ -19,17 +19,17 @@ Generated: 2026-05-21T12:22:57+00:00
 - Communes / Geography: 3 chart-ready, 0 preview-ready, 29 need mapping
 - Construction: 0 chart-ready, 0 preview-ready, 16 need mapping
 - Crime / Justice: 0 chart-ready, 0 preview-ready, 0 need mapping
-- Economy / National Accounts: 1 chart-ready, 0 preview-ready, 22 need mapping
+- Economy / National Accounts: 2 chart-ready, 0 preview-ready, 21 need mapping
 - Education: 0 chart-ready, 0 preview-ready, 26 need mapping
 - Elections: 0 chart-ready, 0 preview-ready, 1 need mapping
 - Enterprises / Business: 0 chart-ready, 0 preview-ready, 68 need mapping
 - Environment / Energy: 0 chart-ready, 0 preview-ready, 45 need mapping
 - Health: 0 chart-ready, 0 preview-ready, 7 need mapping
 - Housing: 4 chart-ready, 0 preview-ready, 44 need mapping
-- Labour Market: 5 chart-ready, 0 preview-ready, 57 need mapping
+- Labour Market: 6 chart-ready, 0 preview-ready, 56 need mapping
 - Other / Unknown: 0 chart-ready, 0 preview-ready, 0 need mapping
 - Population: 6 chart-ready, 0 preview-ready, 185 need mapping
-- Prices / Inflation: 1 chart-ready, 0 preview-ready, 18 need mapping
+- Prices / Inflation: 2 chart-ready, 0 preview-ready, 17 need mapping
 - Public Finance: 0 chart-ready, 0 preview-ready, 41 need mapping
 - Salaries / Income: 4 chart-ready, 0 preview-ready, 67 need mapping
 - Social Conditions: 0 chart-ready, 0 preview-ready, 0 need mapping
