@@ -446,6 +446,194 @@ CONCEPTS: list[Concept] = [
         popular=False,
         difficulty="intermediate",
     ),
+    Concept(
+        id="net_migration",
+        title="People moving in and out of Luxembourg",
+        description="Arrivals, departures and net migration — the main driver of "
+        "Luxembourg's population growth.",
+        topic="Population",
+        keywords=["migration", "immigration", "emigration", "net migration",
+                  "arrivals", "departures", "people moving", "newcomers",
+                  "moving to Luxembourg"],
+        dataset_id="DF_B2400",
+        chart="line",
+        value_format="number",
+        series_dim="POP_MOVEMENT",
+        default_series=["Arrivals", "Departures", "Net migration"],
+        filters={"SPECIFICATION": "All citizenships"},
+        explanation="Arrivals are people moving to Luxembourg, departures are people "
+        "leaving, and net migration is the difference. Net migration has long been "
+        "the main reason the population keeps growing.",
+        unit_note="Number of people per year, all citizenships combined.",
+        caveat="Counts moves across the national border recorded in population "
+        "statistics; the most recent year may still be partial.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="births_deaths",
+        title="Births and deaths each year",
+        description="How often people are born and die in Luxembourg, as a rate per "
+        "1,000 residents.",
+        topic="Population",
+        keywords=["births", "deaths", "birth rate", "death rate", "natural increase",
+                  "mortality", "how many babies", "how many deaths"],
+        dataset_id="DF_B2110",
+        chart="line",
+        value_format="rate",
+        series_dim="SPECIFICATION",
+        default_series=["Birth rate (in ‰)", "Death rate (en ‰)"],
+        series_labels={
+            "Birth rate (in ‰)": "Birth rate",
+            "Death rate (en ‰)": "Death rate",
+        },
+        explanation="The birth and death rates are shown per 1,000 residents. When "
+        "the birth rate sits above the death rate, the population grows on its own — "
+        "before migration is counted.",
+        unit_note="Births and deaths per 1,000 residents per year.",
+        caveat="Crude rates: they are not adjusted for the age structure of the "
+        "population.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="employment_by_sector",
+        title="Where people work",
+        description="Salaried jobs in Luxembourg split across the main parts of the "
+        "economy.",
+        topic="Labour Market",
+        keywords=["employment", "jobs by sector", "where people work", "industries",
+                  "payroll", "sectors", "workforce", "which industries employ most"],
+        dataset_id="DSD_EMPLOI_SAL@DF_B3000",
+        chart="ranked_bar",
+        value_format="number",
+        series_dim="ACTIVITY",
+        default_series=[
+            "Industry (except construction)",
+            "Construction",
+            "Wholesale and retail trade, transportation and storage, accommodation "
+            "and food service activities",
+            "Information and communication",
+            "Financial and insurance activities",
+            "Professional, scientific, technical, administrative and support "
+            "service activities",
+            "Public administration, defence, education, human health and social "
+            "work activities",
+            "Other activities",
+        ],
+        series_labels={
+            "Industry (except construction)": "Industry",
+            "Wholesale and retail trade, transportation and storage, accommodation "
+            "and food service activities": "Trade, transport & hospitality",
+            "Information and communication": "Information & communication",
+            "Financial and insurance activities": "Finance & insurance",
+            "Professional, scientific, technical, administrative and support "
+            "service activities": "Business services",
+            "Public administration, defence, education, human health and social "
+            "work activities": "Public sector, education & health",
+        },
+        filters={"ADJUSTMENT": "Calendar and seasonally adjusted data"},
+        explanation="Each bar is the number of salaried jobs in that part of the "
+        "economy in the most recent year. It shows which sectors employ the most "
+        "people.",
+        unit_note="Domestic payroll (salaried) employment, most recent year. "
+        "Quarterly figures averaged by year.",
+        caveat="Covers salaried employment only, not the self-employed. Sectors "
+        "group the official NACE classification.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="pay_by_education",
+        title="How education affects pay",
+        description="Average monthly earnings by the level of education a worker "
+        "completed.",
+        topic="Salaries",
+        keywords=["education", "pay by education", "does education pay", "earnings",
+                  "qualifications", "degree", "salary by education level"],
+        dataset_id="DSD_ESS_EARN_M@DF_C1217",
+        chart="ranked_bar",
+        value_format="euro",
+        series_dim="EDUC_LEVEL",
+        default_series=[
+            "Low -  basic level (primary or secondary not completed)",
+            "Medium - completed secondary education (vocational, technician, "
+            "technical or baccalaureate, etc.)",
+            "High - tertiary level (BTS, bachelor, master, doctorate, etc.)",
+        ],
+        series_labels={
+            "Low -  basic level (primary or secondary not completed)":
+                "Basic education",
+            "Medium - completed secondary education (vocational, technician, "
+            "technical or baccalaureate, etc.)": "Secondary education",
+            "High - tertiary level (BTS, bachelor, master, doctorate, etc.)":
+                "Higher education",
+        },
+        filters={
+            "NACE_R2": "Total - all NACE activities",
+            "MEASURE": "Average monthly earnings, full-time equivalent",
+        },
+        explanation="Each bar is the average monthly full-time salary for workers "
+        "with that level of education, across the whole economy. Higher education "
+        "generally means higher pay.",
+        unit_note="Average gross monthly earnings, full-time equivalent, in euros.",
+        caveat="From STATEC's structure-of-earnings survey, run every four years; "
+        "the most recent year available is 2022.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="gva_by_sector",
+        title="What Luxembourg's economy produces",
+        description="Gross value added by sector — which parts of the economy "
+        "generate the most output.",
+        topic="Economy",
+        keywords=["value added", "sectors", "economy by sector", "gva",
+                  "what the economy produces", "industries", "economic structure"],
+        dataset_id="DF_E2601",
+        chart="ranked_bar",
+        value_format="number",
+        series_dim="LABELS",
+        default_series=[
+            "Agriculture, forestry and fishing (A)",
+            "Industry, including energy and water supply (B_E)",
+            "Construction (F)",
+            "Trade, repair of motor vehicles, transportation and stroage, hotels "
+            "and restaurants  (G_I)",
+            "Information and communication (J)",
+            "Financial and insurance activities (K)",
+            "Real estate activities (L)",
+            "Business activities and renting (M_N)",
+            "Public administration, social security, education, health and social "
+            "work activities (O_Q)",
+            "Entertainment and recreation, repair of household goods and other "
+            "services (R_U)",
+        ],
+        series_labels={
+            "Agriculture, forestry and fishing (A)": "Agriculture",
+            "Industry, including energy and water supply (B_E)": "Industry & energy",
+            "Construction (F)": "Construction",
+            "Trade, repair of motor vehicles, transportation and stroage, hotels "
+            "and restaurants  (G_I)": "Trade, transport & hospitality",
+            "Information and communication (J)": "Information & communication",
+            "Financial and insurance activities (K)": "Finance & insurance",
+            "Real estate activities (L)": "Real estate",
+            "Business activities and renting (M_N)": "Business services",
+            "Public administration, social security, education, health and social "
+            "work activities (O_Q)": "Public sector, education & health",
+            "Entertainment and recreation, repair of household goods and other "
+            "services (R_U)": "Other services",
+        },
+        explanation="Gross value added measures the output each sector adds to the "
+        "economy. Finance and business services dominate Luxembourg's output.",
+        unit_note="Gross value added, chain-linked volumes (reference year 2015), "
+        "in million euros. Quarterly figures averaged by year.",
+        caveat="Official STATEC quarterly national accounts. The ten sectors "
+        "together make up total value added.",
+        recommended=True,
+        popular=False,
+        difficulty="intermediate",
+    ),
 ]
 
 CONCEPTS_BY_ID: dict[str, Concept] = {c.id: c for c in CONCEPTS}

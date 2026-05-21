@@ -24,6 +24,11 @@ NEW_CONCEPTS = {
     "wage_indexation": ("DSD_PRIX_EMS@DF_E5200", "Prices & Inflation", "line"),
     "vacancies_jobseekers": ("DF_B3201", "Labour Market", "line"),
     "gdp_trend": ("DF_E2601", "Economy", "line"),
+    "net_migration": ("DF_B2400", "Population", "line"),
+    "births_deaths": ("DF_B2110", "Population", "line"),
+    "employment_by_sector": ("DSD_EMPLOI_SAL@DF_B3000", "Labour Market", "ranked_bar"),
+    "pay_by_education": ("DSD_ESS_EARN_M@DF_C1217", "Salaries", "ranked_bar"),
+    "gva_by_sector": ("DF_E2601", "Economy", "ranked_bar"),
 }
 
 NEW_COMMUNE_DATASETS = (
