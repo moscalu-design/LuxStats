@@ -6,18 +6,38 @@ The app is not centered on an LLM chatbot. The optional natural-language query t
 
 ## Current Structure
 
-- `app.py` - main Streamlit entry page.
-- `pages/` - Streamlit multipage dashboards.
+- `app.py` - main Streamlit entry page (the "find a statistic fast" home).
+- `pages/` - Streamlit multipage topic dashboards.
+- `src/concepts.py` - the curated concept layer: each entry maps an everyday
+  question to a confirmed LUSTAT dataset plus chart configuration.
+- `src/concept_view.py` - turns one concept into a finished, friendly chart
+  block (metrics, chart, "what this means", source expander, CSV download).
+- `src/topic_page.py` - renders a topic page from its curated concepts.
+- `src/home.py` - home page: search box, topic cards, popular charts.
+- `src/search.py` - synonym-aware search mapping plain words to concepts.
+- `src/formatting.py` - human-friendly value/label formatting (euros, %, etc.).
+- `src/charts.py` - reusable Plotly chart builders.
 - `src/statec_client.py` - thin LUSTAT SDMX REST client.
 - `src/cache.py` - CSV and DuckDB cache layer.
-- `src/catalog.py` - starter curated dataset catalog with TODO entries for IDs that still need confirmation.
-- `src/dashboard_specs.py` - page-level placeholder copy and planned dashboard views.
-- `src/charts.py` - reusable Plotly chart builders.
+- `src/data_access.py` - high-level `get_dataset(id)` used by concepts.
+- `src/catalog.py` - advanced dataset catalog with TODO entries for IDs that
+  still need confirmation; powers the Dataset Explorer.
+- `src/dashboard_specs.py` - catalog context for the Dataset Explorer.
 - `src/transforms.py` - shared dataframe transformations.
-- `src/ui_components.py` - shared Streamlit layout and source-info components.
-- `src/salary_explorer.py` - preserved and improved salary/dataflow explorer.
+- `src/ui_components.py` - shared Streamlit layout, theme, and source-info components.
+- `src/salary_explorer.py` - advanced raw salary/dataflow explorer (opt-in).
 - `data/cache/` - local DuckDB and CSV cache files.
 - `data/metadata/` - place for curated metadata files as the catalog grows.
+
+## UX Layers
+
+- **Home** - large search box, topic cards, and one-click popular charts.
+- **Search** - synonym-aware: "pay", "wages", "income" all find salary charts.
+- **Topic pages** - Housing, Salaries, Population, Labour Market, Prices &
+  Inflation each render their curated concepts as finished charts. No raw
+  dataset IDs or SDMX jargon — those live inside each chart's advanced expander.
+- **Dataset Explorer** - the advanced page for searching every official
+  STATEC / LUSTAT dataset and exporting raw CSVs.
 
 ## Run Locally
 
@@ -47,16 +67,23 @@ This remains deployable on Streamlit Community Cloud:
 
 Cached data is local to the running environment. Use the app's refresh buttons to update dataflow lists or selected datasets.
 
-## Adding A Dataset
+## Adding A Curated Chart
 
-1. Confirm the official LUSTAT dataflow ID from the Dataset Explorer or STATEC / LUSTAT.
-2. Add or update an entry in `src/catalog.py`.
-3. Include friendly keywords and aliases, such as `house prices`, `real estate`, `wages`, or `population by commune`.
-4. For placeholder dashboards, add planned views in `src/dashboard_specs.py`.
-5. Build a connected dashboard page using `get_dataset(dataset_id)` from `src/data_access.py`.
-6. Show source details with `data_source_info(...)`.
+The fastest way to add a new statistic to a topic page is to add a `Concept`
+to `src/concepts.py`:
 
-Do not invent dataset IDs. Use `TODO_CONFIRM_*` placeholders until the official ID is verified.
+1. Confirm the official LUSTAT dataflow ID against the live SDMX API or the
+   Dataset Explorer. Only confirmed IDs belong in `concepts.py`.
+2. Add a `Concept(...)` entry: friendly `title`, plain `description`, a
+   matching `topic`, everyday `keywords`, the `dataset_id`, a `chart` type
+   (`line` or `ranked_bar`), a `value_format`, and an `explanation`.
+3. Set `series_dim`, `default_series`, `series_labels`, and `filters` so the
+   chart shows the right, readable slice of the data.
+4. Set `popular=True` to surface it on the home page. The topic page picks it
+   up automatically via `concepts_for_topic(topic)`.
+
+Unconfirmed candidate datasets stay in `src/catalog.py` with `TODO_CONFIRM_*`
+IDs and power only the advanced Dataset Explorer. Do not invent dataset IDs.
 
 Catalog entries should describe the dataset in normal language: title, theme, description, likely filters, geography, update frequency, dashboard fit, and caveats. The Dataset Explorer shows these fields before users need to inspect raw LUSTAT codes.
 The catalog tests check that unconfirmed entries keep the `TODO_CONFIRM_*` prefix, themes match the app navigation, and placeholder dashboards have at least one matching catalog entry.
@@ -93,7 +120,8 @@ The loop reads its UX instructions from `AGENT_TASK.md`. Keep that file focused 
 
 ## Roadmap
 
-- Confirm official dataset IDs for housing, rents, population by commune, labour market, CPI, education, mobility, and public finance.
-- Replace placeholder dashboard pages with curated filters and charts.
+- Confirm official dataset IDs for rents, population by commune, education,
+  mobility, and public finance, then add them as curated concepts.
+- Add beginner-friendly in-page filters (year range, commune) to topic charts.
 - Add richer metadata ingestion from LUSTAT structures where practical.
 - Add map support after commune boundary data is selected and documented.

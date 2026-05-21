@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from src.dashboard_specs import render_topic_dashboard
+from src.topic_page import render_topic_page
 from src.ui_components import configure_page, render_sidebar
 
 configure_page("LuxStats - Population")
 render_sidebar()
-render_topic_dashboard("Population")
+render_topic_page("Population")

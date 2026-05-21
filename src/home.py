@@ -1,67 +1,124 @@
-"""Home page for the statistics portal."""
+"""Home page: find a Luxembourg statistic fast."""
 
 from __future__ import annotations
 
 import streamlit as st
 
-from src.catalog import search_catalog
-from src.ui_components import caveat_panel, page_hero, render_topic_cards, status_panel
+from src.concept_view import render_concept
+from src.concepts import Concept, get_concept, popular_concepts
+from src.search import NO_RESULTS_HINT, search_concepts
+from src.ui_components import page_hero, section_header
 
 
+# Topic -> (icon, one-line description, page path). Only topics with real
+# curated charts are shown, so every card leads somewhere useful.
 TOPIC_CARDS = [
-    {"icon": "🏠", "title": "Housing", "description": "Prices, rents, affordability, and local comparisons.", "action": "Dataset IDs to confirm"},
-    {"icon": "💶", "title": "Salaries", "description": "Live LUSTAT dataflow search, caching, quick charts, and CSV export.", "action": "Ready to explore"},
-    {"icon": "👥", "title": "Population", "description": "Population growth, communes, age groups, and nationality when available.", "action": "Dataset IDs to confirm"},
-    {"icon": "🧰", "title": "Labour Market", "description": "Jobs, unemployment, sectors, and worker groups.", "action": "Dataset IDs to confirm"},
-    {"icon": "📈", "title": "Prices & Inflation", "description": "Consumer prices, inflation trends, and spending categories.", "action": "Dataset IDs to confirm"},
-    {"icon": "🏛️", "title": "Economy", "description": "Business and economic indicators from official data.", "action": "Catalog placeholder"},
+    ("🏠", "Housing", "New homes, building permits, and how big homes are.",
+     "pages/2_Housing.py"),
+    ("💶", "Salaries", "Pay by sector, the gender pay gap, and the minimum wage.",
+     "pages/3_Salaries.py"),
+    ("👥", "Population", "How many people live in Luxembourg, and how that changes.",
+     "pages/4_Population.py"),
+    ("🧰", "Labour Market", "Jobs and unemployment over time.",
+     "pages/5_Labour_Market.py"),
+    ("📈", "Prices & Inflation", "The cost of living and the inflation rate.",
+     "pages/6_Prices_Inflation.py"),
+    ("🔎", "All datasets", "Search every official STATEC / LUSTAT dataset.",
+     "pages/7_Dataset_Explorer.py"),
 ]
+
+
+def _open_concept(concept_id: str) -> None:
+    st.session_state["open_concept"] = concept_id
+
+
+def _concept_card(concept: Concept, *, key_prefix: str) -> None:
+    """A compact, tappable card that opens a chart inline."""
+    with st.container(border=True):
+        st.markdown(
+            f"<span class='lux-tag'>{concept.topic}</span>", unsafe_allow_html=True
+        )
+        st.markdown(f"**{concept.title}**")
+        st.caption(concept.description)
+        st.button(
+            "Open chart →",
+            key=f"{key_prefix}_{concept.id}",
+            use_container_width=True,
+            on_click=_open_concept,
+            args=(concept.id,),
+        )
+
+
+def _grid(items: list[Concept], key_prefix: str, columns: int = 2) -> None:
+    for row_start in range(0, len(items), columns):
+        cols = st.columns(columns)
+        for col, concept in zip(cols, items[row_start:row_start + columns]):
+            with col:
+                _concept_card(concept, key_prefix=key_prefix)
+
+
+def _render_topic_grid() -> None:
+    for row_start in range(0, len(TOPIC_CARDS), 3):
+        cols = st.columns(3)
+        for col, (icon, name, blurb, page) in zip(cols, TOPIC_CARDS[row_start:row_start + 3]):
+            with col:
+                with st.container(border=True):
+                    st.markdown(f"### {icon} {name}")
+                    st.caption(blurb)
+                    st.page_link(page, label=f"Explore {name}", use_container_width=True)
 
 
 def render_home() -> None:
     page_hero(
-        "Luxembourg in plain numbers",
-        "Friendly statistics for everyday questions",
-        "Explore official Luxembourg statistics with clear labels, source notes, and practical starter dashboards. "
-        "The salary explorer and dataset search use live STATEC / LUSTAT dataflows; other topics stay clearly marked until their official IDs are confirmed.",
-    )
-
-    status_panel(
-        "What can I do here today?",
-        [
-            ("1", "Explore salaries with live data", "Search salary, wage, and income dataflows, cache datasets, chart them, and export CSV files."),
-            ("2", "Find candidate datasets", "Use the curated catalog and live dataflow search to discover official LUSTAT sources by topic."),
-            ("3", "Track what still needs verification", "Topic dashboards show TODO_CONFIRM_* placeholders instead of pretending unverified IDs are official."),
-        ],
+        "Luxembourg Statistics Explorer",
+        "Find official Luxembourg statistics in seconds",
+        "Housing, salaries, population, jobs and prices — explained in plain "
+        "language, with clear charts you can explore and download. "
+        "No codes, no jargon, no spreadsheets.",
     )
 
     query = st.text_input(
-        "Find a topic or dataset",
-        placeholder="Try house prices, wages, population by commune, inflation...",
+        "Search Luxembourg statistics",
+        placeholder="Search housing prices, salaries, population, inflation…",
+        key="home_search",
+        label_visibility="collapsed",
     )
-    if query:
-        matches = search_catalog(query=query)
-        st.caption(f"{len(matches)} curated matches")
-        st.dataframe(
-            matches[["theme", "friendly_title", "description", "dataset_id", "status"]],
-            use_container_width=True,
-            hide_index=True,
+
+    # A chart the visitor opened from a card or a search result.
+    open_id = st.session_state.get("open_concept")
+    if open_id:
+        concept = get_concept(open_id)
+        if concept is not None:
+            section_header("Your chart")
+            render_concept(concept, key=f"home_{concept.id}")
+            if st.button("← Back to browsing"):
+                st.session_state.pop("open_concept", None)
+                st.rerun()
+            st.divider()
+
+    if query.strip():
+        results = search_concepts(query)
+        section_header(
+            f"Results for “{query.strip()}”",
+            f"{len(results)} matching statistic(s)" if results else "",
         )
-    else:
-        st.caption("Search covers friendly names, descriptions, aliases, and placeholder IDs in the curated catalog.")
+        if not results:
+            st.info(NO_RESULTS_HINT)
+        else:
+            _grid(results, key_prefix="search")
+        return
 
-    st.subheader("Explore by topic")
-    render_topic_cards(TOPIC_CARDS)
+    section_header("Browse by topic", "Pick an area and jump straight to curated charts.")
+    _render_topic_grid()
 
-    st.subheader("Good next steps")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.page_link("pages/3_Salaries.py", label="Open the salary explorer", icon="💶")
-        st.caption("Best when you want to fetch live LUSTAT salary-related dataflows and build a quick chart.")
-    with col2:
-        st.page_link("pages/7_Dataset_Explorer.py", label="Open the dataset explorer", icon="🔎")
-        st.caption("Best when you want to inspect curated candidates or search live LUSTAT dataflows.")
+    section_header("Start with these popular charts",
+                   "The statistics people look up most — one click to a clear chart.")
+    _grid(popular_concepts(), key_prefix="popular")
 
-    caveat_panel(
-        "Placeholder dashboards are intentionally conservative: they describe planned views, but they do not display fake data or invented official dataset IDs."
-    )
+    with st.container(border=True):
+        st.markdown("#### 🔎 For advanced users")
+        st.caption(
+            "Want the raw data? The Dataset Explorer lets you search all 900+ "
+            "official STATEC / LUSTAT datasets, inspect dimensions, and export CSVs."
+        )
+        st.page_link("pages/7_Dataset_Explorer.py", label="Open the Dataset Explorer")

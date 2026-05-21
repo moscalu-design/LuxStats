@@ -25,7 +25,7 @@ from src.charts import bar_chart, line_chart
 from src.llm_planner import plan_query
 from src.metadata import get_dataset_metadata
 from src.statec_client import SALARY_KEYWORDS, StatecClient, filter_salary_related
-from src.ui_components import data_source_info, download_csv, what_box
+from src.ui_components import data_source_info, download_csv
 
 
 @st.cache_resource
@@ -39,11 +39,11 @@ def cached_dataflows(_client: StatecClient, refresh_token: int = 0):
 
 
 def render_salaries_page() -> None:
-    st.title("Salaries")
-    st.write("Explore official salary, wage, and income datasets from STATEC / LUSTAT.")
-    what_box(
-        "Beginner mode",
-        "Start by choosing a salary-related dataset. Download it once, then preview, chart, filter, and export the cached data.",
+    st.markdown("##### Raw salary dataset explorer")
+    st.caption(
+        "Browse official STATEC / LUSTAT salary, wage and income datasets. "
+        "Download one, then preview, chart, filter, and export the cached data. "
+        "Pick a dataset from the sidebar to begin."
     )
     client = get_client()
     flow, _pool = salary_sidebar(client)

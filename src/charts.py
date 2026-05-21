@@ -6,7 +6,9 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-PORTAL_COLORS = ["#2f6f73", "#c9822b", "#6b8f71", "#6f5e9c", "#b85042", "#427aa1"]
+from src.formatting import axis_tickformat, axis_tickprefix, axis_ticksuffix
+
+PORTAL_COLORS = ["#1f6f8b", "#c9822b", "#6b8f71", "#6f5e9c", "#b85042", "#3a7ca5"]
 
 
 def _layout(fig: go.Figure, title: str | None = None) -> go.Figure:
@@ -45,6 +47,21 @@ def decile_chart(df: pd.DataFrame, decile_col: str, value_col: str, title: str |
     plot_df = df.sort_values(decile_col)
     fig = px.bar(plot_df, x=decile_col, y=value_col)
     return _layout(fig, title)
+
+
+def style_value_axis(fig: go.Figure, value_format: str, axis: str = "y") -> go.Figure:
+    """Format an axis (and hovers) as euros, percentages, counts, etc."""
+    settings = dict(
+        tickformat=axis_tickformat(value_format),
+        tickprefix=axis_tickprefix(value_format),
+        ticksuffix=axis_ticksuffix(value_format),
+        separatethousands=True,
+    )
+    if axis == "x":
+        fig.update_xaxes(**settings)
+    else:
+        fig.update_yaxes(**settings)
+    return fig
 
 
 def map_placeholder(title: str = "Map view coming later") -> go.Figure:

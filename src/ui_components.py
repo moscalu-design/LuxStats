@@ -155,6 +155,50 @@ def inject_style() -> None:
             padding: .85rem 1rem;
             color: #3f3120;
         }
+        .lux-tag {
+            display: inline-block;
+            background: #e8f0f4;
+            color: var(--lux-blue);
+            font-weight: 700;
+            font-size: .72rem;
+            text-transform: uppercase;
+            letter-spacing: .03em;
+            padding: .12rem .55rem;
+            border-radius: 999px;
+            margin-right: .45rem;
+            vertical-align: middle;
+        }
+        .lux-explain {
+            background: var(--lux-soft);
+            border-radius: 8px;
+            padding: .8rem 1rem;
+            color: #3a4654;
+            line-height: 1.5;
+            margin: .7rem 0 .3rem 0;
+            font-size: .95rem;
+        }
+        .lux-section-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--lux-ink);
+            margin: 1.6rem 0 .2rem 0;
+        }
+        .lux-section-sub {
+            color: var(--lux-muted);
+            margin-bottom: .6rem;
+        }
+        /* Make the search box feel like the front door of the app. */
+        div[data-testid="stTextInput"] input {
+            font-size: 1.05rem;
+            padding: .65rem .85rem;
+        }
+        div[data-testid="stTextInput"] input:focus {
+            border-color: var(--lux-blue);
+        }
+        /* Bordered containers used as cards. */
+        div[data-testid="stVerticalBlockBorderWrapper"] {
+            border-radius: 10px;
+        }
         @media (max-width: 760px) {
             .block-container {padding-left: 1rem; padding-right: 1rem;}
             .lux-grid {grid-template-columns: 1fr;}
@@ -168,10 +212,29 @@ def inject_style() -> None:
 
 
 def render_sidebar() -> None:
-    st.sidebar.title("LuxStats")
+    st.sidebar.title("📊 LuxStats")
     st.sidebar.caption(APP_TAGLINE)
     st.sidebar.markdown("---")
-    st.sidebar.caption("Use the page list above to move between dashboards. Start with Salaries or Dataset Explorer for live LUSTAT data.")
+    st.sidebar.markdown("**Browse by topic**")
+    st.sidebar.page_link("app.py", label="Home", icon="🏠")
+    st.sidebar.page_link("pages/2_Housing.py", label="Housing", icon="🏠")
+    st.sidebar.page_link("pages/3_Salaries.py", label="Salaries", icon="💶")
+    st.sidebar.page_link("pages/4_Population.py", label="Population", icon="👥")
+    st.sidebar.page_link("pages/5_Labour_Market.py", label="Jobs & unemployment", icon="🧰")
+    st.sidebar.page_link("pages/6_Prices_Inflation.py", label="Prices & inflation", icon="📈")
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("**For advanced users**")
+    st.sidebar.page_link("pages/7_Dataset_Explorer.py", label="Dataset Explorer", icon="🔎")
+    st.sidebar.page_link("pages/8_About_Data.py", label="About the data", icon="ℹ️")
+    st.sidebar.markdown("---")
+    st.sidebar.caption("All figures come from official STATEC / LUSTAT statistics.")
+
+
+def section_header(title: str, subtitle: str = "") -> None:
+    """Consistent section heading used across the portal."""
+    st.markdown(f"<div class='lux-section-title'>{escape(title)}</div>", unsafe_allow_html=True)
+    if subtitle:
+        st.markdown(f"<div class='lux-section-sub'>{escape(subtitle)}</div>", unsafe_allow_html=True)
 
 
 def render_topic_cards(cards: list[Mapping[str, str]]) -> None:
@@ -271,10 +334,16 @@ def what_box(title: str, body: str) -> None:
     st.info(f"**{title}**\n\n{body}")
 
 
-def download_csv(df: pd.DataFrame, file_name: str, label: str = "Download the data") -> None:
+def download_csv(
+    df: pd.DataFrame,
+    file_name: str,
+    label: str = "Download the data",
+    key: str | None = None,
+) -> None:
     st.download_button(
         label,
         data=df.to_csv(index=False).encode("utf-8"),
         file_name=file_name,
         mime="text/csv",
+        key=key or f"dl_{file_name}",
     )

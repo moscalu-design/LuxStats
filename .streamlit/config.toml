@@ -1,0 +1,13 @@
+# Streamlit theme for the LuxStats portal — calm, trustworthy, public-facing.
+[theme]
+primaryColor = "#1f6f8b"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f4f7fa"
+textColor = "#1f2933"
+font = "sans serif"
+
+[client]
+showErrorDetails = true
+
+[server]
+headless = true
