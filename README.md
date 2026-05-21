@@ -15,6 +15,12 @@ The app is not centered on an LLM chatbot. The optional natural-language query t
 - `src/topic_page.py` - renders a topic page from its curated concepts.
 - `src/home.py` - home page: search box, topic cards, popular charts.
 - `src/search.py` - synonym-aware search mapping plain words to concepts.
+- `src/data/communes.py` - canonical Luxembourg commune names and cautious
+  alias matching for entries such as "Luxembourg City".
+- `src/data/commune_portal.py` - defensive profile builder for commune-level
+  datasets already known to the catalog or cached locally.
+- `src/ui/commune_components.py` - Commune Portal cards, charts, tables, and
+  source-detail components.
 - `src/formatting.py` - human-friendly value/label formatting (euros, %, etc.).
 - `src/charts.py` - reusable Plotly chart builders.
 - `src/statec_client.py` - thin LUSTAT SDMX REST client.
@@ -36,6 +42,8 @@ The app is not centered on an LLM chatbot. The optional natural-language query t
 - **Topic pages** - Housing, Salaries, Population, Labour Market, Prices &
   Inflation each render their curated concepts as finished charts. No raw
   dataset IDs or SDMX jargon — those live inside each chart's advanced expander.
+- **Commune Portal** - choose one Luxembourg commune and see every connected
+  official commune-level dataset for that commune in one profile.
 - **Dataset Explorer** - the advanced page for searching every official
   STATEC / LUSTAT dataset and exporting raw CSVs.
 
@@ -67,6 +75,61 @@ This remains deployable on Streamlit Community Cloud:
 
 Cached data is local to the running environment. Use the app's refresh buttons to update dataflow lists or selected datasets.
 
+## Commune Portal
+
+Open `pages/9_Commune_Portal.py` from the sidebar or search for a commune on
+the home page, for example `Hesperange`, `population Hesperange`, or
+`housing Luxembourg City`.
+
+The portal is intentionally conservative:
+
+- It only shows values from datasets declared or detected as commune-level.
+- National-only datasets are not converted into local estimates.
+- Empty topic sections explain that no connected commune-level data is
+  available yet.
+- Source details and caveats stay under expanders.
+- The commune list contains the 100 current Luxembourg communes from
+  Luxembourg geoportal administrative metadata checked in May 2026.
+
+Confirmed commune-level LUSTAT tables currently wired into the portal:
+
+- `DF_X021` - Population by canton and municipality.
+- `DF_X020` - Population density by canton and municipality on 1 January.
+- `DF_C1600` - Monthly salaries by municipality, filtered to the Median indicator.
+- `DF_X026` - Employment and unemployment by canton and municipality, filtered
+  to the unemployment-rate indicator.
+- `DSD_CENSUS_NB_LOG_CLA@DF_B1707` - Census dwellings by type of building,
+  occupancy status, canton and municipality, filtered to totals.
+- `DSD_CENSUS_MENAGE_PV@DF_B1703` - Census private households by canton and
+  municipality, filtered to total household size.
+
+## Adding Commune-Level Datasets
+
+Add or update a catalog entry in `src/catalog.py` with these fields:
+
+```python
+CatalogEntry(
+    dataset_id="CONFIRMED_LUSTAT_ID",
+    theme="Population",
+    title="Population by commune",
+    friendly_title="Population by commune",
+    description="Residents by commune and year.",
+    geographic_level="commune",
+    geography_column="COMMUNE_LABEL",
+    commune_code_column="COMMUNE",
+    commune_name_column="COMMUNE_LABEL",
+    value_column="OBS_VALUE",
+    time_column="TIME_PERIOD",
+    commune_portal=True,
+    status="confirmed",
+)
+```
+
+Use `commune_portal=True` only when the dataset really contains commune-level
+rows. If the exact LUSTAT ID is still unknown, keep the `TODO_CONFIRM_*`
+placeholder and `status="needs_confirmation"`; the portal will list it as a
+TODO source but will not fake values.
+
 ## Adding A Curated Chart
 
 The fastest way to add a new statistic to a topic page is to add a `Concept`
@@ -97,8 +160,19 @@ The catalog tests check that unconfirmed entries keep the `TODO_CONFIRM_*` prefi
 ## Tests
 
 ```bash
+python -m compileall app.py pages src tests
 pytest
-python -m py_compile app.py pages/*.py src/*.py tests/*.py
+./scripts/test_app.sh
+```
+
+`scripts/test_app.sh` runs compile checks, pytest, core Streamlit import checks,
+and optional browser tests when Playwright is installed. Browser tests are
+local/dev-only and are not required for Streamlit deployment:
+
+```bash
+pip install playwright
+playwright install chromium
+pytest tests/e2e
 ```
 
 ## Automated UX Refactor Loop
@@ -122,6 +196,9 @@ The loop reads its UX instructions from `AGENT_TASK.md`. Keep that file focused 
 
 - Confirm official dataset IDs for rents, population by commune, education,
   mobility, and public finance, then add them as curated concepts.
+- Confirm exact STATEC / LUSTAT mappings for commune-level rent and sale-price
+  tables if/when they are available in LUSTAT. The current housing metric is a
+  census dwelling count, not a rent or property-price estimate.
 - Add beginner-friendly in-page filters (year range, commune) to topic charts.
 - Add richer metadata ingestion from LUSTAT structures where practical.
 - Add map support after commune boundary data is selected and documented.

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from src.catalog import catalog_validation_issues, is_placeholder_dataset_id, search_catalog
+from src.catalog import catalog_dataframe, catalog_validation_issues, is_placeholder_dataset_id, search_catalog
 from src.dashboard_specs import DASHBOARD_SPECS
 
 
@@ -33,3 +33,20 @@ def test_unconfirmed_catalog_entries_use_todo_confirm_prefix() -> None:
 def test_dashboard_specs_have_catalog_entries() -> None:
     for theme in DASHBOARD_SPECS:
         assert not search_catalog(theme=theme).empty
+
+
+def test_catalog_exposes_commune_portal_metadata() -> None:
+    df = catalog_dataframe()
+    required = {
+        "geographic_level",
+        "geography_column",
+        "commune_code_column",
+        "commune_name_column",
+        "value_column",
+        "time_column",
+        "commune_portal",
+    }
+    assert required.issubset(df.columns)
+    commune_entries = df[df["commune_portal"]]
+    assert not commune_entries.empty
+    assert set(commune_entries["geographic_level"]) == {"commune"}

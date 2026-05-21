@@ -222,6 +222,7 @@ def render_sidebar() -> None:
     st.sidebar.page_link("pages/4_Population.py", label="Population", icon="👥")
     st.sidebar.page_link("pages/5_Labour_Market.py", label="Jobs & unemployment", icon="🧰")
     st.sidebar.page_link("pages/6_Prices_Inflation.py", label="Prices & inflation", icon="📈")
+    st.sidebar.page_link("pages/9_Commune_Portal.py", label="Commune Portal", icon="📍")
     st.sidebar.markdown("---")
     st.sidebar.markdown("**For advanced users**")
     st.sidebar.page_link("pages/7_Dataset_Explorer.py", label="Dataset Explorer", icon="🔎")
@@ -340,6 +341,9 @@ def download_csv(
     label: str = "Download the data",
     key: str | None = None,
 ) -> None:
+    if df is None or df.empty:
+        st.caption("No downloadable rows are available for this view yet.")
+        return
     st.download_button(
         label,
         data=df.to_csv(index=False).encode("utf-8"),

@@ -6,7 +6,7 @@ import streamlit as st
 
 from src.concept_view import render_concept
 from src.concepts import Concept, get_concept, popular_concepts
-from src.search import NO_RESULTS_HINT, search_concepts
+from src.search import NO_RESULTS_HINT, search_communes, search_concepts
 from src.ui_components import page_hero, section_header
 
 
@@ -23,6 +23,8 @@ TOPIC_CARDS = [
      "pages/5_Labour_Market.py"),
     ("📈", "Prices & Inflation", "The cost of living and the inflation rate.",
      "pages/6_Prices_Inflation.py"),
+    ("📍", "Commune Portal", "Choose one commune and see local statistics in one place.",
+     "pages/9_Commune_Portal.py"),
     ("🔎", "All datasets", "Search every official STATEC / LUSTAT dataset.",
      "pages/7_Dataset_Explorer.py"),
 ]
@@ -55,6 +57,27 @@ def _grid(items: list[Concept], key_prefix: str, columns: int = 2) -> None:
         for col, concept in zip(cols, items[row_start:row_start + columns]):
             with col:
                 _concept_card(concept, key_prefix=key_prefix)
+
+
+def _commune_card(result: dict[str, str], key_prefix: str) -> None:
+    with st.container(border=True):
+        st.markdown("<span class='lux-tag'>Commune</span>", unsafe_allow_html=True)
+        st.markdown(f"**{result['title']}**")
+        st.caption(result["description"])
+        if st.button(
+            "Open commune profile →",
+            key=f"{key_prefix}_{result['commune']}_{result['tab']}",
+            use_container_width=True,
+        ):
+            st.session_state["selected_commune"] = result["commune"]
+            st.switch_page("pages/9_Commune_Portal.py")
+
+
+def _commune_grid(results: list[dict[str, str]], key_prefix: str) -> None:
+    cols = st.columns(min(2, len(results))) if results else []
+    for col, result in zip(cols, results):
+        with col:
+            _commune_card(result, key_prefix)
 
 
 def _render_topic_grid() -> None:
@@ -98,13 +121,17 @@ def render_home() -> None:
 
     if query.strip():
         results = search_concepts(query)
+        commune_results = search_communes(query)
+        total = len(results) + len(commune_results)
         section_header(
             f"Results for “{query.strip()}”",
-            f"{len(results)} matching statistic(s)" if results else "",
+            f"{total} matching result(s)" if total else "",
         )
-        if not results:
+        if not results and not commune_results:
             st.info(NO_RESULTS_HINT)
         else:
+            if commune_results:
+                _commune_grid(commune_results, key_prefix="commune_search")
             _grid(results, key_prefix="search")
         return
 

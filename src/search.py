@@ -8,6 +8,7 @@ never need to know STATEC vocabulary.
 from __future__ import annotations
 
 from src.concepts import Concept, all_concepts
+from src.data.communes import extract_commune_from_query
 
 # Synonym groups. Any word in a group expands the query with the whole group,
 # so "house" also searches "housing", "property", "real estate", etc.
@@ -69,7 +70,37 @@ def search_concepts(query: str, limit: int = 8) -> list[Concept]:
     return [concept for _, _, concept in scored[:limit]]
 
 
+def _commune_tab(query: str) -> str:
+    query = query.casefold()
+    if any(term in query for term in ("housing", "house", "rent", "property")):
+        return "Housing"
+    if any(term in query for term in ("population", "people", "resident")):
+        return "Population"
+    if any(term in query for term in ("salary", "salar", "wage", "pay")):
+        return "Salaries"
+    if any(term in query for term in ("labour", "labor", "job", "unemployment", "employment")):
+        return "Labour"
+    return "Overview"
+
+
+def search_communes(query: str) -> list[dict[str, str]]:
+    """Return Commune Portal search hits for recognized commune-name queries."""
+    commune = extract_commune_from_query(query)
+    if not commune:
+        return []
+    tab = _commune_tab(query)
+    description = f"Open the local statistics profile for {commune}, starting from {tab.lower()}."
+    return [
+        {
+            "commune": commune,
+            "tab": tab,
+            "title": f"{commune} commune profile",
+            "description": description,
+        }
+    ]
+
+
 NO_RESULTS_HINT = (
     "No exact match found. Try searching for **salary**, **housing**, "
-    "**population**, **inflation**, or **unemployment**."
+    "**population**, **inflation**, **unemployment**, or a commune such as **Hesperange**."
 )
