@@ -11,6 +11,10 @@ It is fully deterministic. **There is no LLM, chatbot, or AI answer box.**
 Everything is driven by official data, curated metadata, reusable charts, and
 static plain-language templates.
 
+Legacy model-backed planner code has been removed from the runtime. Advanced
+exploration uses explicit filters, grouping controls, generated SQL, and
+validated DuckDB execution.
+
 ## What the app does
 
 - **Find a Statistic** — search in plain language ("housing prices", "median
@@ -24,9 +28,13 @@ static plain-language templates.
 - **Commune Portal** — choose one of Luxembourg's 100 communes and see every
   connected commune-level statistic in one profile, including a map view.
 - **Topic dashboards** — Housing, Salaries, Population, Labour Market, Prices
-  & Inflation, each rendered from curated charts with explanations and sources.
+  & Inflation, and Economy. Topics with confirmed charts show charts first;
+  topics still being mapped show source coverage without pretending charts exist.
+- **Source Library** — the advanced inventory of 1,396 official API datasets,
+  Excel files and publication files, with priority, mapping status and
+  visualization readiness.
 - **Dataset Explorer** — the advanced page for power users to search every
-  official dataset and export raw CSVs.
+  official LUSTAT API dataset and export raw CSVs.
 
 Every chart shows a plain-language explanation, a source/freshness badge, and
 a CSV download. Raw STATEC / LUSTAT codes stay inside "Advanced details"
@@ -44,6 +52,10 @@ expanders, hidden by default.
 | Commune Portal + map | `pages/3_Commune_Portal.py` |
 | Plain-language explanations | `src/ui/explanations.py` |
 | Source / freshness badges | `src/ui/source_badges.py` |
+| Time parsing and chart period controls | `src/data/time_utils.py`, `src/ui/time_controls.py` |
+| Source mapping status | `src/data/source_mapping.py` |
+| Source visualization readiness | `src/data/source_visualization.py`, `src/ui/source_visualizer.py` |
+| Public-interest priority questions | `src/data/priority_topics.py` |
 
 ## Project structure
 
@@ -56,6 +68,12 @@ expanders, hidden by default.
 - `src/home.py` — home page sections: search, analysis cards, topic cards.
 - `src/search.py` — synonym-aware search mapping plain words to concepts.
 - `src/data/analysis_cards.py` — curated guided-analysis journey cards.
+- `src/data/priority_topics.py` — public-interest priority topics and
+  source-backed question cards.
+- `src/data/source_mapping.py` — derived mapping status for source records.
+- `src/data/source_visualization.py` — safe readiness state for every official
+  source: chart, preview, download, mapping, inspection, manual review or low priority.
+- `src/data/time_utils.py` — annual/quarterly/monthly/date period parsing.
 - `src/data/communes.py` — canonical commune names and cautious alias matching.
 - `src/data/commune_portal.py` — defensive commune profile builder.
 - `src/data/geography.py` — geospatial hook for commune boundary GeoJSON.
@@ -65,6 +83,10 @@ expanders, hidden by default.
 - `src/ui/explanations.py` — template-based plain-language explanations.
 - `src/ui/source_badges.py` — source and data-freshness badges.
 - `src/ui/chart_builder.py` — the guided "Build a Chart" flow.
+- `src/ui/time_controls.py` — reusable chart period controls.
+- `src/ui/navigation.py`, `src/ui/page_header.py` — centralized navigation and
+  page headers.
+- `src/ui/source_visualizer.py` — universal source viewer used by Source Library.
 - `src/ui/maps.py` — commune map view (honest empty state until boundaries
   are connected).
 - `src/ui/commune_components.py` — Commune Portal cards, charts, tables.
@@ -176,6 +198,70 @@ Add an `AnalysisCard` to `src/data/analysis_cards.py`. Each card needs a
 `concept_id` (opens that chart inline) **or** a `page` path (routes there).
 `card_validation_issues()` and the tests check that every card resolves.
 
+## How the 1,400-source library fits the product
+
+The Source Library is not the front door for normal users. It powers:
+
+- Home-page question cards and source coverage badges.
+- Metric Finder fallback results when no curated chart exists.
+- Topic-page source coverage and unmapped source lists.
+- Commune Portal source coverage and unmapped local-source suggestions.
+- What Changed watch lists and publication-annex previews.
+- Source-mapping priority reports.
+
+Mapping status is derived in `src/data/source_mapping.py`:
+
+| Status | Meaning |
+| --- | --- |
+| `mapped_to_metric` | A source powers a chart-ready `Concept`. |
+| `mapped_to_commune_portal` | A source powers a Commune Portal metric. |
+| `unmapped` | Useful source, not yet wired into a chart/profile. |
+| `needs_manual_review` | Usually publication/PDF material requiring human review. |
+| `ignored_low_priority` | Cataloged but not a current product priority. |
+
+The Source Library page can filter by mapping status. Keep raw source work
+there; keep public pages focused on chart-ready metrics and clear questions.
+
+## Source Visualization Index
+
+The visualization index classifies every official source into the safest
+available user experience:
+
+| Status | Meaning |
+| --- | --- |
+| `chart_ready` | Confirmed chart/profile route exists. |
+| `preview_ready` | Cached table can be previewed before mapping. |
+| `downloadable_only` | Official file exists but is not table-previewable. |
+| `needs_column_mapping` | API data exists but columns/filters need confirmation. |
+| `needs_excel_inspection` | Excel/CSV source should be downloaded and inspected. |
+| `needs_manual_review` | Usually PDF/publication material needing human review. |
+| `not_chartable` | No safe chart/preview path is known. |
+| `ignored_low_priority` | Official but not a current public-priority source. |
+
+Build or refresh it with:
+
+```bash
+python scripts/build_source_visualization_index.py
+```
+
+This writes `data/catalog/source_visualization_index.json` and
+`reports/source_visualization_index.md`. It does not fetch every dataset or
+invent charts.
+
+## How time controls work
+
+`src/data/time_utils.py` parses common STATEC/LUSTAT periods such as `2024`,
+`2024-Q1`, `2024Q1`, `2024-T1`, `2024-M01`, `2024-01`, `Jan 2024`, and normal
+dates. `src/ui/time_controls.py` turns that into reusable Streamlit controls
+for curated charts, Build a Chart, Compare, and Commune Portal trends.
+
+When adding a new chart, prefer:
+
+1. Normalize the time column with `normalize_period_column`.
+2. Render controls with `render_time_controls`.
+3. Filter with `apply_time_filter`.
+4. Show a friendly empty state if the selected range has no rows.
+
 ## How to refresh data
 
 - Dataflow list: refresh button in the Dataset Explorer.
@@ -233,6 +319,26 @@ python scripts/generate_source_report.py
 Writes `reports/statec_source_catalog_report.md` — a breakdown of every
 cataloged source by category, type, geographic level and priority, plus
 recommended next sources to connect. Generated entirely from catalog data.
+
+Additional product-readiness reports:
+
+- `reports/production_readiness_review.md`
+- `reports/screen_by_screen_ux_audit.md`
+- `reports/source_visualization_index.md`
+- `reports/source_mapping_priorities.md`
+
+## Working with Claude, Codex or another LLM
+
+Use the checked-in handoff files:
+
+- `AGENTS.md` — shared rules for coding agents.
+- `CLAUDE.md` — Claude Code-specific notes.
+- `CODEX.md` — Codex-specific notes.
+- `docs/LLM_HANDOFF.md` — concise copy/paste context for a future LLM chat.
+- `docs/PROMPTING_GUIDE.md` — prompt examples for common LuxStats tasks.
+
+Any future agent should preserve the no-LLM-runtime rule and validate with the
+commands above.
 
 ### How to inspect an Excel source
 
@@ -297,11 +403,9 @@ buttons to update it.
 
 ## Next recommended ingestion priorities
 
-`scripts/generate_source_report.py` ranks these from the live catalog. As of
-the last refresh, the highest-value sources not yet wired into a curated
-metric are commune-level Excel tables, housing indicators, and short-term
-economic indicators — see section 11 of
-`reports/statec_source_catalog_report.md`.
+See `reports/source_mapping_priorities.md`. As of the current catalog, the
+highest-value unmapped items are housing permits by canton, population
+census breakdowns by commune, fertility, and short-term economy indicators.
 - "Recently updated" timestamps reflect when a dataset was last cached on the
   running deployment, not an official STATEC publication date.
 

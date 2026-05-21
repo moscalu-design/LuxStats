@@ -3,12 +3,13 @@ from __future__ import annotations
 import streamlit as st
 
 from src.cache import list_cached_datasets
+from src.ui.page_header import render_page_header
 from src.ui_components import configure_page, render_sidebar
 
 configure_page("LuxStats - About Data")
 render_sidebar()
 
-st.title("About the data")
+render_page_header("about")
 st.write(
     "LuxStats uses official data from STATEC / LUSTAT. Downloaded datasets are cached locally in DuckDB and CSV files "
     "so the app does not refetch the same data unnecessarily."

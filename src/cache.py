@@ -194,8 +194,8 @@ def get_dataset_meta(dataset_id: str) -> dict[str, Any] | None:
         con.close()
 
 
-def schema_for_llm(dataset_id: str, sample_per_column: int = 8) -> dict[str, Any]:
-    """Compact schema description with sample values — fed to the LLM planner."""
+def schema_for_query_builder(dataset_id: str, sample_per_column: int = 8) -> dict[str, Any]:
+    """Compact schema description with sample values for deterministic tools."""
     meta = get_dataset_meta(dataset_id)
     if not meta:
         return {}

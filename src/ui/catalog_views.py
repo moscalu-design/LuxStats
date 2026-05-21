@@ -11,6 +11,8 @@ from typing import Any
 import streamlit as st
 
 from src.data.source_catalog import catalog_summary
+from src.data.source_mapping import source_coverage
+from src.data.source_visualization import visualization_summary
 
 _TYPE_LABEL = {
     "LUSTAT_API": "LUSTAT API",
@@ -42,8 +44,30 @@ def render_coverage_section() -> None:
         cols[1].metric("Excel data files", f"{summary['excel']:,}")
         cols[2].metric("Publication annexes", f"{summary['publications']:,}")
         cols[3].metric("Commune-level sources", f"{summary['commune_level']:,}")
+        viz = visualization_summary()
+        st.caption(
+            f"{viz['chart_ready']:,} chart-ready · {viz['preview_ready']:,} preview-ready · "
+            f"{viz['needs_mapping']:,} need mapping or inspection"
+        )
         st.page_link("pages/13_Source_Library.py",
                      label="Explore all sources in the Source Library")
+
+
+def render_source_coverage_badges(category: str | None = None, *, label: str = "Source coverage") -> None:
+    """Compact coverage summary used on Home, Finder and topic pages."""
+    coverage = source_coverage(category)
+    if not coverage["total"]:
+        st.caption("No cataloged sources yet.")
+        return
+    with st.container(border=True):
+        st.markdown(f"#### {label}")
+        cols = st.columns(4)
+        cols[0].metric("Sources", f"{coverage['total']:,}")
+        cols[1].metric("Chart-ready", f"{coverage['chart_ready']:,}")
+        cols[2].metric("Commune-ready", f"{coverage['commune_ready']:,}")
+        cols[3].metric("Publications", f"{coverage['publications']:,}")
+        if coverage["unmapped_high_priority"]:
+            st.caption(f"{coverage['unmapped_high_priority']:,} high-priority source(s) still need mapping.")
 
 
 def render_source_records(

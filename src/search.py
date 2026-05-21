@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from src.concepts import Concept, all_concepts
 from src.data.communes import extract_commune_from_query
+from src.data.source_visualization import load_source_visualization_index
 
 # Synonym groups. Any word in a group expands the query with the whole group,
 # so "house" also searches "housing", "property", "real estate", etc.
@@ -98,6 +99,47 @@ def search_communes(query: str) -> list[dict[str, str]]:
             "description": description,
         }
     ]
+
+
+def search_source_visualizations(query: str, limit: int = 10) -> list[dict]:
+    """Return source-index matches ranked by safe visualization usefulness."""
+    query = (query or "").strip().casefold()
+    if not query:
+        return []
+    terms = _expand([t for t in query.replace(",", " ").split() if t])
+    status_weight = {
+        "chart_ready": 100,
+        "preview_ready": 70,
+        "needs_column_mapping": 45,
+        "needs_excel_inspection": 40,
+        "downloadable_only": 30,
+        "needs_manual_review": 20,
+        "not_chartable": 5,
+        "ignored_low_priority": 0,
+    }
+    scored: list[tuple[int, str, dict]] = []
+    for row in load_source_visualization_index():
+        haystack = " ".join(
+            str(row.get(field, ""))
+            for field in ("title", "category", "source_type", "dataset_id", "source_id", "reason")
+        ).casefold()
+        score = 0
+        for term in terms:
+            if term in haystack:
+                score += 5
+            if term in str(row.get("title", "")).casefold():
+                score += 5
+            if term in str(row.get("category", "")).casefold():
+                score += 2
+        if query in haystack:
+            score += 8
+        if score <= 0:
+            continue
+        score += status_weight.get(str(row.get("visualization_status")), 0)
+        score += int(row.get("priority_score") or 0)
+        scored.append((score, str(row.get("title", "")), row))
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [row for _, _, row in scored[:limit]]
 
 
 NO_RESULTS_HINT = (

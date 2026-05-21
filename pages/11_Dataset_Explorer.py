@@ -8,6 +8,8 @@ from src.charts import bar_chart, line_chart
 from src.data.source_catalog import catalog_summary
 from src.metadata import get_dataset_metadata
 from src.statec_client import StatecClient
+from src.ui.page_header import render_page_header
+from src.ui.time_controls import apply_time_filter, render_time_controls
 from src.ui_components import configure_page, data_source_info, download_csv, render_sidebar
 
 configure_page("LuxStats - Dataset Explorer")
@@ -24,8 +26,10 @@ def cached_dataflows(_client: StatecClient, refresh_token: int = 0):
     return load_dataflows(_client, force_refresh=refresh_token > 0)
 
 
-st.title("Dataset Explorer")
-st.write("Search curated topics first, then inspect live STATEC / LUSTAT dataflows when you need more detail.")
+render_page_header("dataset_explorer", eyebrow="Advanced")
+st.caption(
+    "Use this page for actual API data inspection. Use Source Library for the full source inventory and readiness status."
+)
 
 _summary = catalog_summary()
 if _summary["total"]:
@@ -104,7 +108,9 @@ with st.expander("Live LUSTAT dataflow search", expanded=False):
     try:
         flows = cached_dataflows(client, st.session_state["explorer_refresh_token"])
     except Exception as exc:
-        st.error(f"Could not load dataflows: {exc}")
+        st.error("Could not load the live LUSTAT dataflow list right now.")
+        with st.expander("Advanced details", expanded=False):
+            st.code(str(exc))
         flows = []
     live_terms = [term for term in query.split() if term]
     if live_terms:
@@ -125,7 +131,9 @@ with st.expander("Live LUSTAT dataflow search", expanded=False):
                     fetch_and_cache_dataset(client, selected, force_refresh=True)
                     st.success("Dataset cached.")
                 except Exception as exc:
-                    st.error(f"Fetch failed: {exc}")
+                    st.error("This dataset could not be fetched right now.")
+                    with st.expander("Advanced details", expanded=False):
+                        st.code(str(exc))
         if cached or is_dataset_cached(selected.id):
             df = load_dataset(selected.id)
             meta = get_dataset_metadata(selected.id, df)
@@ -144,10 +152,15 @@ with st.expander("Live LUSTAT dataflow search", expanded=False):
             if "TIME_PERIOD" in df.columns and "OBS_VALUE" in df.columns:
                 chart_df = df[["TIME_PERIOD", "OBS_VALUE"]].dropna(subset=["OBS_VALUE"])
                 chart_df = chart_df.groupby("TIME_PERIOD", as_index=False)["OBS_VALUE"].mean()
-                st.plotly_chart(
-                    line_chart(chart_df, "TIME_PERIOD", "OBS_VALUE", title="Average value over time"),
-                    use_container_width=True,
-                )
+                selection = render_time_controls(chart_df, "TIME_PERIOD", f"explorer_{selected.id}", default="Last 10 years")
+                chart_df = apply_time_filter(chart_df, "TIME_PERIOD", selection)
+                if chart_df.empty:
+                    st.info("No data exists for the selected period. Choose a wider range.")
+                else:
+                    st.plotly_chart(
+                        line_chart(chart_df, "TIME_PERIOD", "OBS_VALUE", title="Average value over time"),
+                        use_container_width=True,
+                    )
             elif "OBS_VALUE" in df.columns:
                 label_col = next((col for col in df.columns if col != "OBS_VALUE"), None)
                 if label_col:

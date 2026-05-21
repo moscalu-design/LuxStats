@@ -3,20 +3,24 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from src.data.file_ingestion import (
-    cached_file_path,
-    download_source_file,
-    inspect_excel_file,
-    is_file_cached,
-    preview_excel_sheet,
-)
 from src.data.source_catalog import (
     SOURCE_TYPES,
     catalog_generated_at,
     load_unified_source_catalog,
     search_source_catalog,
 )
-from src.ui_components import configure_page, page_hero, render_sidebar, section_header
+from src.data.source_mapping import enrich_with_mapping_status, high_priority_unmapped, source_coverage
+from src.data.source_visualization import load_source_visualization_index, visualization_summary
+from src.ui.page_header import render_page_header
+from src.ui.source_visualizer import (
+    readiness_dataframe,
+    readiness_options,
+    render_source_card,
+    render_universal_source_viewer,
+    render_visualization_summary,
+    status_label,
+)
+from src.ui_components import configure_page, render_sidebar, section_header
 
 configure_page("LuxStats - Source Library")
 render_sidebar()
@@ -27,16 +31,14 @@ def _catalog() -> list[dict]:
     return load_unified_source_catalog()
 
 
-page_hero(
-    "Source Library",
-    "Browse the official STATEC / LUSTAT sources connected to this portal",
-    "Every official source the portal knows about — LUSTAT API datasets, "
-    "STATEC Excel tables, and publication annexes — categorized and searchable "
-    "in one place. This is an advanced page; most visitors should start from "
-    "Find a Statistic or the topic pages.",
-)
+@st.cache_data(ttl=3600, show_spinner=False)
+def _readiness() -> list[dict]:
+    return load_source_visualization_index()
 
-records = _catalog()
+
+render_page_header("source_library", eyebrow="Advanced")
+
+records = enrich_with_mapping_status(_catalog())
 if not records:
     st.warning(
         "The source catalog has not been built yet. A maintainer can build it "
@@ -48,6 +50,53 @@ if not records:
 generated = catalog_generated_at()
 st.caption(f"{len(records):,} sources cataloged"
            + (f" · last refreshed {generated}" if generated else ""))
+readiness_rows = _readiness()
+readiness_by_id = {row["source_id"]: row for row in readiness_rows}
+records_by_id = {row["source_id"]: row for row in records}
+
+coverage = source_coverage()
+with st.container(border=True):
+    st.markdown("#### Catalog readiness")
+    cols = st.columns(5)
+    cols[0].metric("Sources", f"{coverage['total']:,}")
+    cols[1].metric("Chart-ready", f"{coverage['chart_ready']:,}")
+    cols[2].metric("Commune-ready", f"{coverage['commune_ready']:,}")
+    cols[3].metric("Publication annexes", f"{coverage['publication_annexes']:,}")
+    cols[4].metric("Needs mapping", f"{coverage['unmapped_high_priority']:,}")
+
+render_visualization_summary(readiness_rows)
+
+quick_cols = st.columns(3)
+with quick_cols[0]:
+    if st.button("Show chart-ready sources", use_container_width=True):
+        st.session_state["source_status_filter"] = "chart_ready"
+with quick_cols[1]:
+    if st.button("Show sources needing mapping", use_container_width=True):
+        st.session_state["source_status_filter"] = "needs_column_mapping"
+with quick_cols[2]:
+    if st.button("Show manual-review sources", use_container_width=True):
+        st.session_state["source_status_filter"] = "needs_manual_review"
+
+chart_ready_top = [row for row in readiness_rows if row["visualization_status"] == "chart_ready"][:6]
+needs_mapping_top = [
+    row for row in readiness_rows
+    if row["priority"] == "high"
+    and row["visualization_status"] in {"needs_column_mapping", "needs_excel_inspection", "needs_manual_review"}
+][:6]
+if chart_ready_top or needs_mapping_top:
+    left, right = st.columns(2)
+    with left:
+        section_header("Open chart-ready sources")
+        for row in chart_ready_top[:3]:
+            record = records_by_id.get(row["source_id"], row)
+            if render_source_card(record, row, key=f"open_ready_{row['source_id']}"):
+                st.session_state["selected_source_id"] = row["source_id"]
+    with right:
+        section_header("Recommended mapping queue")
+        for row in needs_mapping_top[:3]:
+            record = records_by_id.get(row["source_id"], row)
+            if render_source_card(record, row, key=f"open_mapping_{row['source_id']}"):
+                st.session_state["selected_source_id"] = row["source_id"]
 
 # --- Filters --------------------------------------------------------------
 categories = ["All"] + sorted({r["category"] for r in records if r.get("category")})
@@ -80,6 +129,27 @@ with row3[0]:
     rec_portal = st.checkbox("Recommended for the portal only")
 with row3[1]:
     rec_commune = st.checkbox("Commune-level only")
+row4 = st.columns(2)
+with row4[0]:
+    mapping_status = st.selectbox(
+        "Mapping status",
+        ["All", "mapped_to_metric", "mapped_to_commune_portal", "unmapped", "needs_manual_review", "ignored_low_priority"],
+    )
+with row4[1]:
+    show_count = st.selectbox("Rows to show", [50, 100, 250, 500], index=1)
+row5 = st.columns(2)
+status_default = st.session_state.pop("source_status_filter", "All")
+with row5[0]:
+    visualization_status = st.selectbox(
+        "Visualization readiness",
+        readiness_options(),
+        index=readiness_options().index(status_default) if status_default in readiness_options() else 0,
+    )
+with row5[1]:
+    sort_mode = st.selectbox(
+        "Sort by",
+        ["Chart-ready first", "High priority first", "Source type", "Category"],
+    )
 
 filters = {
     "category": category,
@@ -91,7 +161,32 @@ filters = {
     "recommended_for_portal": rec_portal,
     "recommended_for_commune_portal": rec_commune,
 }
-results = search_source_catalog(query, filters, records=records)
+results = enrich_with_mapping_status(search_source_catalog(query, filters, records=records))
+if mapping_status != "All":
+    results = [record for record in results if record.get("mapping_status") == mapping_status]
+if visualization_status != "All":
+    results = [
+        record for record in results
+        if readiness_by_id.get(record["source_id"], {}).get("visualization_status") == visualization_status
+    ]
+
+def _sort_key(record: dict) -> tuple:
+    ready = readiness_by_id.get(record["source_id"], {})
+    status = ready.get("visualization_status", "")
+    if sort_mode == "High priority first":
+        return (-int(record.get("priority_score") or 0), record.get("title", ""))
+    if sort_mode == "Source type":
+        return (record.get("source_type", ""), record.get("title", ""))
+    if sort_mode == "Category":
+        return (record.get("category", ""), record.get("title", ""))
+    return (
+        status != "chart_ready",
+        status != "preview_ready",
+        -int(record.get("priority_score") or 0),
+        record.get("title", ""),
+    )
+
+results = sorted(results, key=_sort_key)
 
 # --- Results table --------------------------------------------------------
 section_header(f"{len(results):,} matching source(s)")
@@ -105,82 +200,57 @@ table = pd.DataFrame([
         "Title": r["title"],
         "Category": r["category"],
         "Type": r["source_type"],
+        "Readiness": status_label(readiness_by_id.get(r["source_id"], {}).get("visualization_status", "")),
+        "Action": readiness_by_id.get(r["source_id"], {}).get("recommended_action", ""),
         "Geography": r["geographic_level"],
         "Priority": r["priority"],
+        "Mapping": r["mapping_status"],
+        "Chart-ready": "Yes" if r.get("chart_ready") else "",
+        "Commune": "Yes" if r.get("commune_portal_ready") else "",
     }
-    for r in results[:500]
+    for r in results[:show_count]
 ])
 st.dataframe(table, use_container_width=True, hide_index=True)
-if len(results) > 500:
-    st.caption("Showing the first 500 rows — narrow the filters to see the rest.")
+if len(results) > show_count:
+    st.caption(f"Showing the first {show_count} rows — narrow the filters to see the rest.")
+
+with st.expander("Recommended next mappings", expanded=False):
+    st.caption("High-priority official sources that are not yet mapped to a chart or commune profile.")
+    todos = high_priority_unmapped(limit=12)
+    if not todos:
+        st.success("No high-priority unmapped source is currently flagged.")
+    else:
+        todo_table = pd.DataFrame(
+            {
+                "Title": item["title"],
+                "Category": item["category"],
+                "Type": item["source_type"],
+                "Geography": item["geographic_level"],
+                "Reason": item.get("priority_reason", ""),
+            }
+            for item in todos
+        )
+        st.dataframe(todo_table, use_container_width=True, hide_index=True)
+
+with st.expander("Full readiness table", expanded=False):
+    st.caption("Paginated advanced view of the visualization index, not a charting promise.")
+    st.dataframe(readiness_dataframe([readiness_by_id[r["source_id"]] for r in results[:show_count] if r["source_id"] in readiness_by_id]), use_container_width=True, hide_index=True)
 
 # --- Source detail --------------------------------------------------------
-section_header("Source details", "Open one source for advanced details.")
-options = results[:500]
+section_header("Universal source viewer", "Open one source for its safest available experience.")
+options = results[:show_count]
+selected_source_id = st.session_state.get("selected_source_id")
+default_index = 0
+if selected_source_id:
+    default_index = next((idx for idx, row in enumerate(options) if row["source_id"] == selected_source_id), 0)
 chosen = st.selectbox(
     "Open a source",
     options,
     format_func=lambda r: f"[{r['source_type']}] {r['title']}",
+    index=default_index if options else None,
 )
 
 if chosen is not None:
-    with st.container(border=True):
-        st.markdown(f"#### {chosen['title']}")
-        st.markdown(
-            f"<span class='lux-tag'>{chosen['category']}</span> "
-            f"<span class='lux-tag'>{chosen['source_type']}</span> "
-            f"<span class='lux-muted'>{chosen['geographic_level']} · "
-            f"priority: {chosen['priority']}</span>",
-            unsafe_allow_html=True,
-        )
-        if chosen.get("description"):
-            st.caption(chosen["description"])
-        if chosen.get("source_page_url"):
-            st.markdown(f"🔗 [Source page]({chosen['source_page_url']})")
-        if chosen.get("file_url"):
-            st.markdown(f"📄 [Data file]({chosen['file_url']})")
-        if chosen.get("api_url"):
-            st.markdown(f"🔌 [API endpoint]({chosen['api_url']})")
-
-        if chosen["source_type"] == "LUSTAT_API":
-            st.caption(f"Dataset ID: `{chosen['dataset_id']}`")
-
-        # File inspection for Excel / other-format sources.
-        if chosen.get("file_url") and chosen["source_type"] in {
-            "STATEC_EXCEL", "OTHER_FORMAT", "PUBLICATION_EXCEL",
-        }:
-            cached = is_file_cached(chosen)
-            st.caption(f"Local cache: {'downloaded' if cached else 'not downloaded yet'}")
-            cols = st.columns(2)
-            if cols[0].button("⬇︎ Download / cache this file", key="dl_source"):
-                try:
-                    with st.spinner("Downloading from STATEC…"):
-                        download_source_file(chosen)
-                    st.success("File cached.")
-                    st.rerun()
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Download failed: {exc}")
-            if cached and cols[1].button("🔍 Inspect sheets", key="inspect_source"):
-                st.session_state["inspect_source_id"] = chosen["source_id"]
-
-            if cached and st.session_state.get("inspect_source_id") == chosen["source_id"]:
-                info = inspect_excel_file(cached_file_path(chosen))
-                st.markdown(f"**Status:** `{info['status']}` — {info['notes']}")
-                st.markdown(f"**Sheets ({info['sheet_count']}):** "
-                            + ", ".join(info["sheet_names"]) or "—")
-                if info["detected_communes"]:
-                    st.markdown(f"**Communes detected:** {len(info['detected_communes'])}")
-                if info["sheet_names"]:
-                    sheet = st.selectbox("Preview a sheet", info["sheet_names"])
-                    preview = preview_excel_sheet(cached_file_path(chosen), sheet)
-                    if preview.empty:
-                        st.info("This sheet could not be previewed.")
-                    else:
-                        st.dataframe(preview, use_container_width=True, hide_index=True)
-
-        with st.expander("Advanced details (raw catalog record)"):
-            st.json(chosen)
-
-        if chosen.get("priority_reason"):
-            st.caption(f"Priority reasoning: {chosen['priority_reason']} "
-                       f"(score {chosen.get('priority_score', 0)})")
+    st.session_state["selected_source_id"] = chosen["source_id"]
+    readiness = readiness_by_id.get(chosen["source_id"], {})
+    render_universal_source_viewer(chosen, readiness, key_prefix=f"source_{chosen['source_id']}")

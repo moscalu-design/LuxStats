@@ -1,8 +1,8 @@
-"""Execute structured JSON query plans against DuckDB.
+"""Execute structured query plans against DuckDB.
 
-A query plan describes WHAT to compute; this module turns it into SQL and
-runs it. The LLM is never trusted to do arithmetic — it only produces the
-plan, and we validate every column reference against the actual schema.
+A query plan describes what to compute; this module turns it into SQL and
+runs it. Every column reference is validated against the actual schema before
+execution.
 """
 
 from __future__ import annotations

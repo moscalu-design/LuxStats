@@ -17,6 +17,8 @@ from src.concepts import Concept
 from src.data_access import get_dataset
 from src.formatting import format_delta, format_value
 from src.metadata import get_dataset_metadata
+from src.ui.source_badges import render_freshness_badge, render_source_expander
+from src.ui.time_controls import apply_time_filter, render_time_controls
 from src.ui_components import download_csv
 
 _YEAR_RE = re.compile(r"^\d{4}$")
@@ -194,8 +196,22 @@ def render_concept(concept: Concept, *, key: str | None = None) -> None:
                 st.caption(f"Dataset ID: `{concept.dataset_id}` · rows fetched: {len(raw):,}")
             return
 
-        _render_metrics(concept, tidy)
-        chart_df = _render_chart(concept, tidy)
+        meta = get_dataset_metadata(concept.dataset_id, raw)
+        meta.update({
+            "geographic_level": concept.geographic_level,
+            "unit_note": concept.unit_note,
+            "caveat": concept.caveat,
+        })
+        render_freshness_badge(meta, tidy.rename(columns={"Year": "TIME_PERIOD"}))
+
+        selection = render_time_controls(tidy, "Year", f"{key}_{concept.id}")
+        filtered_tidy = apply_time_filter(tidy, "Year", selection)
+        if filtered_tidy.empty:
+            st.info("No data exists for the selected period. Choose a wider range.")
+            return
+
+        _render_metrics(concept, filtered_tidy)
+        chart_df = _render_chart(concept, filtered_tidy)
 
         if concept.explanation:
             st.markdown(
@@ -204,21 +220,7 @@ def render_concept(concept: Concept, *, key: str | None = None) -> None:
                 unsafe_allow_html=True,
             )
 
-        meta = get_dataset_metadata(concept.dataset_id, raw)
-        with st.expander("Source, units and advanced details"):
-            st.markdown(f"**Source:** {meta['source']}")
-            st.markdown(f"**Official dataset ID:** `{concept.dataset_id}`")
-            if concept.unit_note:
-                st.markdown(f"**What the numbers measure:** {concept.unit_note}")
-            if meta.get("latest_period"):
-                st.markdown(f"**Latest period in the data:** {meta['latest_period']}")
-            if meta.get("last_fetched"):
-                st.markdown(f"**Last refreshed:** {meta['last_fetched']}")
-            st.markdown(f"**Rows in the full dataset:** {len(raw):,}")
-            if concept.caveat:
-                st.markdown(f"**Good to know:** {concept.caveat}")
-            st.markdown("**Raw data preview** (first 100 rows):")
-            st.dataframe(raw.head(100), use_container_width=True, hide_index=True)
+        render_source_expander(meta, raw)
 
         download_csv(
             chart_df,
