@@ -4,8 +4,10 @@ import streamlit as st
 
 from src.concept_view import render_concept
 from src.concepts import all_concepts, get_concept
+from src.data.source_catalog import search_source_catalog
 from src.search import NO_RESULTS_HINT, search_communes, search_concepts
 from src.ui.cards import render_metric_grid
+from src.ui.catalog_views import render_source_records
 from src.ui_components import configure_page, page_hero, render_sidebar, section_header
 
 configure_page("LuxStats - Find a Statistic")
@@ -61,13 +63,30 @@ if query.strip():
         f"Results for “{query.strip()}”",
         f"{total} matching result(s)" if total else "",
     )
-    if not results and not commune_results:
+    # Curated metrics rank first; raw official sources are offered below them.
+    sources = search_source_catalog(query)
+    if not results and not commune_results and not sources:
         st.info(NO_RESULTS_HINT)
     else:
         for result in commune_results:
             _commune_card(result)
         if results:
             render_metric_grid(results, key_prefix="finder", columns=2)
+
+    if sources:
+        if results:
+            section_header(
+                "Other official sources",
+                f"{len(sources)} STATEC / LUSTAT source(s) also match — these "
+                "are raw datasets and files, not curated charts.",
+            )
+        else:
+            section_header(
+                "Official sources you can explore",
+                "No curated chart matches yet, but these official STATEC "
+                "sources do — open them in the Source Library.",
+            )
+        render_source_records(sources, key_prefix="finder_sources", limit=6)
 else:
     section_header(
         "All curated statistics",

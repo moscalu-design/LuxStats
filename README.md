@@ -74,6 +74,19 @@ expanders, hidden by default.
   SDMX client, DuckDB + CSV cache, and the high-level `get_dataset(id)`.
 - `src/catalog.py` — advanced dataset catalog (includes `TODO_CONFIRM_*`
   placeholders) powering the Dataset Explorer.
+- `src/data/categorization.py` — transparent keyword rules for categorizing
+  any source into one of 20 themes and inferring its geographic level.
+- `src/data/statec_api_catalog.py`, `statec_other_formats_catalog.py`,
+  `statec_publication_catalog.py` — builders for the three source catalogs.
+- `src/data/source_catalog.py` — the unified, searchable source catalog with
+  priority scoring.
+- `src/data/file_ingestion.py` — download and inspect Excel/CSV source files.
+- `src/data/statec_web.py` — polite, domain-restricted page fetching.
+- `src/ui/catalog_views.py` — catalog views embedded in product pages.
+- `src/reports/source_catalog_report.py` — Markdown catalog report generator.
+- `data/catalog/*.json` — committed source catalogs the app loads at runtime.
+- `scripts/refresh_source_catalog.py`, `scripts/generate_source_report.py` —
+  catalog maintenance (the only place crawling happens).
 
 ## Run locally
 
@@ -169,6 +182,74 @@ Add an `AnalysisCard` to `src/data/analysis_cards.py`. Each card needs a
 - Dataset contents: open a dataset in the Dataset Explorer and fetch/refresh.
 - Cache location: `data/cache/lustat.duckdb` plus CSVs in `data/cache/csv/`.
 
+## STATEC Source Catalog
+
+Official Luxembourg statistics are scattered across three kinds of source.
+The portal catalogs all of them into one searchable **unified source
+catalog**, so users can find statistics without knowing where they live:
+
+| Source type | What it is |
+| --- | --- |
+| `LUSTAT_API` | A dataflow in the LUSTAT SDMX API (machine-readable). |
+| `STATEC_EXCEL` | An Excel/CSV table from STATEC's "data — other formats" pages. |
+| `PUBLICATION_EXCEL` | An Excel annex attached to a STATEC publication. |
+| `PUBLICATION_PDF` | A PDF report from a STATEC publication series. |
+| `OTHER_FORMAT` | Any other downloadable file (zip, …). |
+
+Every source is auto-categorized into 20 themes (Housing, Population,
+Salaries / Income, …) by the transparent keyword rules in
+`src/data/categorization.py`, given a geographic level, and scored for
+ingestion priority (`high` / `medium` / `low`).
+
+**The app only ever loads cached catalog JSON** from `data/catalog/` —
+crawling never runs at page load. The catalog files are committed so the
+deployed app has data. Browse everything on the **Source Library** page.
+
+Modules: `src/data/statec_api_catalog.py` (LUSTAT API),
+`statec_other_formats_catalog.py` (STATEC Excel tables),
+`statec_publication_catalog.py` (publication annexes),
+`source_catalog.py` (unified catalog + search + priority),
+`file_ingestion.py` (download/inspect Excel files),
+`statec_web.py` (polite, domain-restricted fetching).
+
+### How to refresh the source catalog
+
+```bash
+python scripts/refresh_source_catalog.py          # uses page caches
+python scripts/refresh_source_catalog.py --force  # re-download everything
+```
+
+This fetches the LUSTAT dataflow list and a small fixed set of official
+STATEC pages (only `statistiques.public.lu`, `data.public.lu`,
+`lustat.statec.lu`), rebuilds `data/catalog/*.json`, and is the only place
+network crawling happens. Commit the updated `data/catalog/` files.
+
+### How to generate the source report
+
+```bash
+python scripts/generate_source_report.py
+```
+
+Writes `reports/statec_source_catalog_report.md` — a breakdown of every
+cataloged source by category, type, geographic level and priority, plus
+recommended next sources to connect. Generated entirely from catalog data.
+
+### How to inspect an Excel source
+
+Open the **Source Library** page, filter to a `STATEC_EXCEL` or
+`PUBLICATION_EXCEL` source, and use **Download / cache** then **Inspect
+sheets**. Inspection reports sheet names, row counts, likely time / geography
+/ value columns, and any detected commune names — and an ingestion status
+(`cataloged` → `downloaded` → `inspected` → `importable` /
+`needs_manual_mapping` / `failed`).
+
+### How to add a manual mapping
+
+Once an Excel/API source is confirmed useful, wire it into the curated layer:
+add a `Concept` (`src/concepts.py`) for an API dataflow, or an entry in
+`src/data/excel_sources.py` for an Excel file. The source catalog is for
+*discovery*; the `Concept` layer is for *curated charts*.
+
 ## Map views
 
 Map views are deliberately honest: the app never fakes a map. Drop a commune
@@ -204,6 +285,23 @@ buttons to update it.
   **dwelling count**, not a price estimate.
 - Housing-price quarterly figures are averaged to a yearly value for the
   curated charts; the full quarterly detail is in each chart's advanced view.
+- **Source categorization is heuristic.** ~25% of LUSTAT dataflows have terse
+  titles and land in "Other / Unknown". Rules in `src/data/categorization.py`
+  are deliberately transparent and easy to extend — improve them rather than
+  hand-editing the catalog.
+- The source catalog is a **discovery** layer: cataloged Excel/publication
+  sources are not automatically charted. Connecting one still means adding a
+  curated `Concept` or `excel_sources.py` entry (a manual mapping).
+- The publication crawler covers a fixed set of well-known series. Add more
+  slugs to `PUBLICATION_SERIES` in `src/data/statec_publication_catalog.py`.
+
+## Next recommended ingestion priorities
+
+`scripts/generate_source_report.py` ranks these from the live catalog. As of
+the last refresh, the highest-value sources not yet wired into a curated
+metric are commune-level Excel tables, housing indicators, and short-term
+economic indicators — see section 11 of
+`reports/statec_source_catalog_report.md`.
 - "Recently updated" timestamps reflect when a dataset was last cached on the
   running deployment, not an official STATEC publication date.
 

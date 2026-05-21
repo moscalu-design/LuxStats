@@ -37,5 +37,14 @@ def test_new_modules_import_cleanly() -> None:
         "src.ui.chart_builder",
         "src.analysis.comparison",
         "src.analysis.changes",
+        "src.data.categorization",
+        "src.data.statec_api_catalog",
+        "src.data.statec_other_formats_catalog",
+        "src.data.statec_publication_catalog",
+        "src.data.source_catalog",
+        "src.data.file_ingestion",
+        "src.data.statec_web",
+        "src.ui.catalog_views",
+        "src.reports.source_catalog_report",
     ]:
         importlib.import_module(module)

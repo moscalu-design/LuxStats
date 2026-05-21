@@ -9,6 +9,7 @@ from src.concepts import get_concept
 from src.data.analysis_cards import commune_cards, comparison_cards, popular_cards
 from src.search import NO_RESULTS_HINT, search_communes, search_concepts
 from src.ui.cards import render_analysis_grid, render_metric_grid
+from src.ui.catalog_views import render_coverage_section
 from src.ui_components import page_hero, section_header
 
 # Topic -> (icon, name, one-line description, page path).
@@ -125,6 +126,10 @@ def render_home() -> None:
             "housing, salaries, population, jobs and prices."
         )
         st.page_link("pages/5_What_Changed.py", label="Open What Changed?")
+
+    section_header("Data coverage",
+                   "Every official STATEC source the portal has cataloged.")
+    render_coverage_section()
 
     with st.container(border=True):
         st.markdown("#### 🔎 For advanced users")

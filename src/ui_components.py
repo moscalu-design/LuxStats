@@ -232,6 +232,7 @@ def render_sidebar() -> None:
     st.sidebar.markdown("---")
     st.sidebar.markdown("**For advanced users**")
     st.sidebar.page_link("pages/11_Dataset_Explorer.py", label="Dataset Explorer", icon="🔎")
+    st.sidebar.page_link("pages/13_Source_Library.py", label="Source Library", icon="🗂️")
     st.sidebar.page_link("pages/12_About_Data.py", label="About the data", icon="ℹ️")
     st.sidebar.markdown("---")
     st.sidebar.caption("All figures come from official STATEC / LUSTAT statistics.")

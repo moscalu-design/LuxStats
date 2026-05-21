@@ -5,6 +5,7 @@ import streamlit as st
 from src.catalog import catalog_themes, search_catalog
 from src.cache import fetch_and_cache_dataset, is_dataset_cached, load_dataset, load_dataflows
 from src.charts import bar_chart, line_chart
+from src.data.source_catalog import catalog_summary
 from src.metadata import get_dataset_metadata
 from src.statec_client import StatecClient
 from src.ui_components import configure_page, data_source_info, download_csv, render_sidebar
@@ -25,6 +26,18 @@ def cached_dataflows(_client: StatecClient, refresh_token: int = 0):
 
 st.title("Dataset Explorer")
 st.write("Search curated topics first, then inspect live STATEC / LUSTAT dataflows when you need more detail.")
+
+_summary = catalog_summary()
+if _summary["total"]:
+    with st.container(border=True):
+        st.markdown("#### 🗂️ Looking beyond the LUSTAT API?")
+        st.caption(
+            f"The Source Library catalogs {_summary['total']:,} official sources — "
+            f"{_summary['api']:,} LUSTAT API datasets, {_summary['excel']:,} Excel "
+            f"data files and {_summary['publications']:,} publication annexes — "
+            "categorized and searchable."
+        )
+        st.page_link("pages/13_Source_Library.py", label="Open the Source Library")
 
 query = st.text_input("Search datasets", placeholder="house prices, wages, population, inflation...")
 theme_options = ["All"] + catalog_themes()

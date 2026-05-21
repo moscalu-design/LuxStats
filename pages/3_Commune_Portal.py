@@ -7,6 +7,8 @@ from src.data.commune_portal import get_commune_profile
 from src.data.communes import commune_suggestions, list_communes, normalize_commune_name
 from src.ui.commune_components import render_all_data_table, render_section_items
 from src.ui.maps import render_commune_map, render_map_empty_state
+from src.data.source_catalog import get_commune_level_sources
+from src.ui.catalog_views import render_source_records
 from src.ui_components import configure_page, download_csv, page_hero, render_sidebar, section_header
 
 configure_page("LuxStats - Commune Portal")
@@ -155,3 +157,22 @@ with tabs[7]:
             f"{profile['placeholder_count']} commune-level catalog entries are still placeholders and need exact STATEC / LUSTAT dataset IDs before they can show values."
         )
         st.write("The commune list is based on Luxembourg geoportal administrative commune metadata checked in May 2026.")
+
+    section_header(
+        "Commune-level sources in the catalog",
+        "Official STATEC sources detected as commune or canton level.",
+    )
+    commune_sources = get_commune_level_sources()
+    mapped_ids = {entry["Dataset ID"] for entry in profile["available_datasets"]}
+    unmapped = [s for s in commune_sources if s.get("dataset_id") not in mapped_ids]
+    st.caption(
+        f"{len(commune_sources)} commune/canton-level sources cataloged · "
+        f"{len(mapped_ids)} already wired into this portal."
+    )
+    with st.expander("Potential commune datasets not yet mapped", expanded=False):
+        st.caption(
+            "Advanced: these official commune-level sources are cataloged but "
+            "not yet mapped into the Commune Portal. They are not charted here "
+            "until a maintainer confirms and maps them."
+        )
+        render_source_records(unmapped, key_prefix="commune_unmapped", limit=8)

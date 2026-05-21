@@ -8,6 +8,10 @@ ROOT_DIR = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT_DIR / "data"
 CACHE_DIR = DATA_DIR / "cache"
 METADATA_DIR = DATA_DIR / "metadata"
+# Curated source catalogs are committed to the repo so the deployed app has
+# data without crawling; raw downloaded files stay in the gitignored cache.
+CATALOG_DIR = DATA_DIR / "catalog"
+REPORTS_DIR = ROOT_DIR / "reports"
 
 APP_TITLE = "Luxembourg Statistics Portal"
 APP_TAGLINE = "Explore official Luxembourg statistics through simple interactive charts."

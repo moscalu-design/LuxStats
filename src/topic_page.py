@@ -12,7 +12,18 @@ import streamlit as st
 
 from src.concept_view import render_concept
 from src.concepts import concepts_for_topic
+from src.data.source_catalog import get_sources_by_category
+from src.ui.catalog_views import render_source_records
 from src.ui_components import page_hero, section_header
+
+# Topic -> unified-catalog category, used to surface connected official sources.
+_TOPIC_CATEGORY: dict[str, str] = {
+    "Housing": "Housing",
+    "Salaries": "Salaries / Income",
+    "Population": "Population",
+    "Labour Market": "Labour Market",
+    "Prices & Inflation": "Prices / Inflation",
+}
 
 # Plain-language framing for each topic page: (icon, headline, intro).
 TOPIC_INTRO: dict[str, tuple[str, str, str]] = {
@@ -85,8 +96,27 @@ def render_topic_page(topic: str) -> None:
         render_concept(concept, key=f"topic_{concept.id}")
 
     st.divider()
+    _render_topic_sources(topic)
     _render_go_deeper()
     _render_more_topics(topic)
+
+
+def _render_topic_sources(topic: str) -> None:
+    """Show official STATEC sources cataloged for this topic, if any."""
+    category = _TOPIC_CATEGORY.get(topic)
+    if not category:
+        return
+    sources = get_sources_by_category(category)
+    if not sources:
+        return
+    with st.expander(f"Official sources for {topic.lower()} "
+                     f"({len(sources)} cataloged)", expanded=False):
+        st.caption(
+            "Beyond the curated charts above, these official STATEC / LUSTAT "
+            "sources cover this topic — API datasets, Excel tables and "
+            "publication annexes."
+        )
+        render_source_records(sources, key_prefix=f"topicsrc_{topic}", limit=6)
 
 
 def _render_go_deeper() -> None:

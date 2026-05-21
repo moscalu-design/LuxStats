@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 echo "==> Compile check"
-"$PYTHON_BIN" -m compileall app.py pages src tests
+"$PYTHON_BIN" -m compileall app.py pages src tests scripts
 
 echo "==> Unit and smoke tests"
 if "$PYTHON_BIN" -m pytest --version >/dev/null 2>&1; then

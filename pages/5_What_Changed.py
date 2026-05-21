@@ -11,6 +11,8 @@ from src.analysis.changes import (
 )
 from src.analysis.comparison import get_commune_comparison_metrics
 from src.charts import ranked_bar_chart
+from src.data.source_catalog import get_recent_publication_sources
+from src.ui.catalog_views import render_source_records
 from src.concepts import all_concepts
 from src.data_access import get_dataset
 from src.formatting import format_delta, format_value
@@ -153,3 +155,17 @@ else:
         st.markdown(f"**Dataset ID:** `{dataset.dataset_id}`")
         st.markdown("**Source:** STATEC / LUSTAT")
         st.markdown(dataset.notes or "Official commune-level dataset.")
+
+st.divider()
+
+# --------------------------------------------------------------------------
+section_header("Recently published sources",
+               "The newest STATEC publication annexes cataloged by the portal.")
+recent = get_recent_publication_sources(limit=9)
+if not recent:
+    st.info(
+        "No publication annexes are cataloged yet. A maintainer can build the "
+        "catalog with `python scripts/refresh_source_catalog.py`."
+    )
+else:
+    render_source_records(recent, key_prefix="whatchanged_pubs", limit=9)

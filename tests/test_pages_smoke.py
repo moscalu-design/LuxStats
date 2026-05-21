@@ -21,6 +21,7 @@ def test_expected_pages_are_present() -> None:
         "10_Prices_Inflation.py",
         "11_Dataset_Explorer.py",
         "12_About_Data.py",
+        "13_Source_Library.py",
     }
     assert expected.issubset(PAGE_TEXT)
 
