@@ -634,6 +634,83 @@ CONCEPTS: list[Concept] = [
         popular=False,
         difficulty="intermediate",
     ),
+    Concept(
+        id="prices_by_category",
+        title="Inflation by spending category",
+        description="How fast prices rose each year in the main parts of the "
+        "household budget.",
+        topic="Prices & Inflation",
+        keywords=["inflation by category", "food prices", "energy prices",
+                  "cost of living", "price categories", "what got more expensive",
+                  "services prices"],
+        dataset_id="DSD_ECOICOP_PRIX@DF_E5409",
+        chart="line",
+        value_format="percent",
+        series_dim="ECOICOP_2018",
+        default_series=["All Items", "Food, including alcohol and tobacco",
+                        "Energy", "Non-energy industrial goods", "Services"],
+        series_labels={
+            "Food, including alcohol and tobacco": "Food",
+            "Non-energy industrial goods": "Goods (non-energy)",
+        },
+        transform="yoy",
+        explanation="Each line is the yearly change in consumer prices for that "
+        "category. Energy is the most volatile — it spiked sharply in 2022 — while "
+        "services prices tend to rise more steadily.",
+        unit_note="Yearly change in the national consumer price index, by category, "
+        "in percent.",
+        caveat="Derived from the monthly national CPI (ECOICOP categories), "
+        "averaged by year. The most recent year may still be partial.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="services_confidence",
+        title="Business confidence in services",
+        description="How optimistic services companies feel about their business — "
+        "an early signal of where the economy is heading.",
+        topic="Economy",
+        keywords=["business confidence", "economic sentiment", "services confidence",
+                  "outlook", "economic mood", "conjuncture", "short-term indicator"],
+        dataset_id="DSD_ENT_CONJ@DF_D5105",
+        chart="line",
+        value_format="number",
+        filters={"MEASURE": "Services confidence indicator"},
+        explanation="The services confidence indicator summarises how firms judge "
+        "recent and expected demand. Positive values mean optimism, negative values "
+        "mean pessimism; it tends to dip before economic slowdowns.",
+        unit_note="Services confidence indicator, balance of opinion. Monthly "
+        "figures averaged by year.",
+        caveat="Based on STATEC's monthly business opinion survey of services "
+        "firms; it measures sentiment, not output.",
+        recommended=True,
+        popular=False,
+        difficulty="intermediate",
+    ),
+    Concept(
+        id="cross_border_workers",
+        title="Residents and cross-border workers",
+        description="How many of Luxembourg's salaried jobs are held by residents "
+        "and how many by workers commuting in from abroad.",
+        topic="Labour Market",
+        keywords=["cross-border workers", "frontaliers", "commuters", "residents",
+                  "workforce", "who works in Luxembourg", "border workers"],
+        dataset_id="DSD_EMPLOI_SAL@DF_B3002",
+        chart="line",
+        value_format="number",
+        series_dim="RESIDENCE",
+        default_series=["Total residents", "Total cross-border"],
+        filters={"ADJUSTMENT": "Calendar and seasonally adjusted data"},
+        explanation="Luxembourg's workforce is split between people who live in the "
+        "country and cross-border workers who commute in daily from Belgium, France "
+        "and Germany. Cross-border workers make up a large share of all jobs.",
+        unit_note="Domestic payroll (salaried) employment, number of people. "
+        "Quarterly figures averaged by year.",
+        caveat="Covers salaried employment only. The cross-border total combines "
+        "commuters from Belgium, France and Germany.",
+        recommended=True,
+        popular=False,
+    ),
 ]
 
 CONCEPTS_BY_ID: dict[str, Concept] = {c.id: c for c in CONCEPTS}

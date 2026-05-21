@@ -29,6 +29,9 @@ NEW_CONCEPTS = {
     "employment_by_sector": ("DSD_EMPLOI_SAL@DF_B3000", "Labour Market", "ranked_bar"),
     "pay_by_education": ("DSD_ESS_EARN_M@DF_C1217", "Salaries", "ranked_bar"),
     "gva_by_sector": ("DF_E2601", "Economy", "ranked_bar"),
+    "prices_by_category": ("DSD_ECOICOP_PRIX@DF_E5409", "Prices & Inflation", "line"),
+    "services_confidence": ("DSD_ENT_CONJ@DF_D5105", "Economy", "line"),
+    "cross_border_workers": ("DSD_EMPLOI_SAL@DF_B3002", "Labour Market", "line"),
 }
 
 NEW_COMMUNE_DATASETS = (
