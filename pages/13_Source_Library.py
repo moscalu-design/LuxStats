@@ -95,12 +95,26 @@ if chart_ready_top or needs_mapping_top:
             record = records_by_id.get(row["source_id"], row)
             if render_source_card(record, row, key=f"open_ready_{row['source_id']}"):
                 st.session_state["selected_source_id"] = row["source_id"]
+                st.rerun()
     with right:
         section_header("Recommended mapping queue")
         for row in needs_mapping_top[:3]:
             record = records_by_id.get(row["source_id"], row)
             if render_source_card(record, row, key=f"open_mapping_{row['source_id']}"):
                 st.session_state["selected_source_id"] = row["source_id"]
+                st.rerun()
+
+selected_source_id = st.session_state.get("selected_source_id")
+if selected_source_id and selected_source_id in records_by_id:
+    section_header("Selected source", "Safest available view for the source you opened.")
+    selected_record = records_by_id[selected_source_id]
+    selected_readiness = readiness_by_id.get(selected_source_id, {})
+    render_universal_source_viewer(
+        selected_record,
+        selected_readiness,
+        key_prefix=f"selected_source_{selected_source_id}",
+    )
+    st.divider()
 
 # --- Filters --------------------------------------------------------------
 categories = ["All"] + sorted({r["category"] for r in records if r.get("category")})
@@ -246,7 +260,6 @@ with st.expander("Full readiness table", expanded=False):
 # --- Source detail --------------------------------------------------------
 section_header("Universal source viewer", "Open one source for its safest available experience.")
 options = results[:show_count]
-selected_source_id = st.session_state.get("selected_source_id")
 default_index = 0
 if selected_source_id:
     default_index = next((idx for idx, row in enumerate(options) if row["source_id"] == selected_source_id), 0)
@@ -257,7 +270,6 @@ chosen = st.selectbox(
     index=default_index if options else None,
 )
 
-if chosen is not None:
+if chosen is not None and st.button("Open selected source", use_container_width=True):
     st.session_state["selected_source_id"] = chosen["source_id"]
-    readiness = readiness_by_id.get(chosen["source_id"], {})
-    render_universal_source_viewer(chosen, readiness, key_prefix=f"source_{chosen['source_id']}")
+    st.rerun()

@@ -13,11 +13,15 @@ import streamlit as st
 from src.concept_view import render_concept
 from src.concepts import concepts_for_topic
 from src.data.source_catalog import get_sources_by_category
-from src.data.source_visualization import get_chart_ready_sources, get_sources_needing_mapping
+from src.data.source_visualization import (
+    get_chart_ready_sources,
+    get_sources_needing_mapping,
+    get_visualization_status,
+)
 from src.ui.catalog_views import render_source_coverage_badges, render_source_records
 from src.ui.nationality_explorer import render_nationality_section
 from src.ui.page_header import render_page_header
-from src.ui.source_visualizer import render_source_card
+from src.ui.source_visualizer import render_source_card, render_universal_source_viewer
 from src.ui_components import section_header
 
 # Topic -> unified-catalog category, used to surface connected official sources.
@@ -148,6 +152,7 @@ def render_topic_page(topic: str) -> None:
             render_source_coverage_badges(category, label=f"{topic} coverage")
     _render_chart_ready_sources(topic)
     _render_topic_sources(topic)
+    _render_selected_topic_source(topic)
     _render_go_deeper()
     _render_more_topics(topic)
 
@@ -162,13 +167,32 @@ def _render_chart_ready_sources(topic: str) -> None:
         with st.expander("More chart-ready source mappings", expanded=False):
             st.caption("These official sources already have safe visualization routes in LuxStats.")
             for row in mapped_more[:4]:
-                render_source_card(row, row, key=f"topic_ready_{row['source_id']}")
+                if render_source_card(row, row, key=f"topic_ready_{row['source_id']}"):
+                    st.session_state[f"topic_selected_source_{topic}"] = row["source_id"]
+                    st.rerun()
     needs = get_sources_needing_mapping(category)
     if needs:
         with st.expander("Sources available but not mapped yet", expanded=False):
             st.caption("These sources are official and relevant, but need confirmed columns, filters, or sheet mapping before charting.")
             for row in needs[:6]:
-                render_source_card(row, row, key=f"topic_needs_{row['source_id']}")
+                if render_source_card(row, row, key=f"topic_needs_{row['source_id']}"):
+                    st.session_state[f"topic_selected_source_{topic}"] = row["source_id"]
+                    st.rerun()
+
+
+def _render_selected_topic_source(topic: str) -> None:
+    source_id = st.session_state.get(f"topic_selected_source_{topic}")
+    if not source_id:
+        return
+    readiness = get_visualization_status(str(source_id))
+    if not readiness:
+        return
+    section_header("Selected source", "Safest available view for the source you opened.")
+    render_universal_source_viewer(
+        readiness,
+        readiness,
+        key_prefix=f"topic_selected_{source_id}",
+    )
 
 
 def _render_topic_sources(topic: str) -> None:
