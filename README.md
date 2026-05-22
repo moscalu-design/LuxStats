@@ -28,7 +28,7 @@ validated DuckDB execution.
 - **Commune Portal** — choose one of Luxembourg's 100 communes and see every
   connected commune-level statistic in one profile, including a map view.
 - **Topic dashboards** — Housing, Salaries, Population, Labour Market, Prices
-  & Inflation, and Economy. Topics with confirmed charts show charts first;
+  & Inflation, Economy, and Tourism. Topics with confirmed charts show charts first;
   topics still being mapped show source coverage without pretending charts exist.
 - **Source Library** — the advanced inventory of 1,396 official API datasets,
   Excel files and publication files, with priority, mapping status and
@@ -56,6 +56,17 @@ expanders, hidden by default.
 | Source mapping status | `src/data/source_mapping.py` |
 | Source visualization readiness | `src/data/source_visualization.py`, `src/ui/source_visualizer.py` |
 | Public-interest priority questions | `src/data/priority_topics.py` |
+
+## Navigation structure
+
+The Streamlit sidebar is intentionally compact and product-led:
+
+- **Main** — Home, Find a Statistic, Compare, Build a Chart, and What Changed?
+- **Topics** — Housing, Salaries & Income, Population, Labour Market, Prices & Inflation, Economy, and Tourism.
+- **Data & Sources** — Dataset Explorer and Source Library, both treated as advanced inspection areas.
+- **About / Help** — About Data.
+
+The Commune Portal remains available from Home, search results, source actions, and commune-focused cards, but it is not a top-level sidebar item. Source-heavy tables and raw records should stay behind expanders so the normal journey starts with search, curated questions, and chart-ready concepts.
 
 ## Project structure
 

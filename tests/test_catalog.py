@@ -19,6 +19,12 @@ def test_catalog_covers_secondary_portal_themes() -> None:
     assert "Public Finance" in result["theme"].tolist()
 
 
+def test_catalog_exposes_tourism_dataset() -> None:
+    result = search_catalog("tourism")
+    assert "Tourism" in result["theme"].tolist()
+    assert "STATEC_XLS_TOURISM_ACTIVITY_D5310" in result["dataset_id"].tolist()
+
+
 def test_catalog_metadata_is_internally_consistent() -> None:
     assert catalog_validation_issues() == []
 

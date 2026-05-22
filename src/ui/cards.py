@@ -14,9 +14,9 @@ from src.data.analysis_cards import AnalysisCard
 
 # Plain-language labels for a concept's geographic level.
 _LEVEL_TEXT = {
-    "national": "🇱🇺 National",
-    "commune": "📍 Commune-level",
-    "region": "🗺️ Regional",
+    "national": "National",
+    "commune": "Commune-level",
+    "region": "Regional",
     "unknown": "Geography varies",
 }
 
@@ -43,9 +43,12 @@ def render_metric_card(concept: Concept, *, key_prefix: str, on_open=None) -> No
             f"Best shown as: {concept.chart_label}",
             "STATEC / LUSTAT",
         ]
-        st.caption(" · ".join(meta_bits))
+        st.markdown(
+            f"<div class='lux-card-meta'>{' · '.join(meta_bits)}</div>",
+            unsafe_allow_html=True,
+        )
         st.button(
-            "Open chart →",
+            "Open chart",
             key=f"{key_prefix}_{concept.id}",
             use_container_width=True,
             on_click=on_open or open_concept,
@@ -76,14 +79,42 @@ def render_analysis_card(card: AnalysisCard, *, key_prefix: str) -> None:
             f"<span class='lux-muted'>{card.difficulty.capitalize()}</span>",
             unsafe_allow_html=True,
         )
-        st.markdown(f"### {card.icon} {card.title}")
+        st.markdown(f"**{card.title}**")
         st.caption(card.blurb)
-        if st.button("Open →", key=f"{key_prefix}_{card.id}", use_container_width=True):
+        if st.button("Open", key=f"{key_prefix}_{card.id}", use_container_width=True):
             if card.concept_id:
                 open_concept(card.concept_id)
                 st.rerun()
             elif card.page:
                 st.switch_page(card.page)
+
+
+def render_question_card(card: dict[str, object], *, key_prefix: str) -> None:
+    """Render a compact source-backed home question card."""
+    with st.container(border=True):
+        st.markdown(f"<span class='lux-tag'>{card['topic']}</span>", unsafe_allow_html=True)
+        st.markdown(f"**{card['question']}**")
+        st.caption(str(card["description"]))
+        st.markdown(
+            f"<div class='lux-card-meta'>{int(card['source_count']):,} source(s) · {card['status']}</div>",
+            unsafe_allow_html=True,
+        )
+        if st.button("Open", key=f"{key_prefix}_{card['id']}", use_container_width=True):
+            if card.get("concept_id"):
+                open_concept(str(card["concept_id"]))
+                st.rerun()
+            else:
+                st.switch_page(str(card["page"]))
+
+
+def render_question_grid(cards: list[dict[str, object]], *, key_prefix: str,
+                         columns: int = 4) -> None:
+    """Lay source-backed home question cards out in a compact grid."""
+    for start in range(0, len(cards), columns):
+        cols = st.columns(columns)
+        for col, card in zip(cols, cards[start:start + columns]):
+            with col:
+                render_question_card(card, key_prefix=key_prefix)
 
 
 def render_analysis_grid(cards: list[AnalysisCard], *, key_prefix: str,

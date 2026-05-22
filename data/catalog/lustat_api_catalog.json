@@ -23548,13 +23548,21 @@
       "touristique",
       "pays",
       "hebergement",
-      "dsd"
+      "dsd",
+      "tourism",
+      "tourists",
+      "hotels",
+      "overnight stays",
+      "nights",
+      "Luxembourg tourism",
+      "D5301"
     ],
     "geographic_level": "region",
     "recommended_for_portal": false,
     "recommended_for_commune_portal": false,
     "last_catalog_refresh": "2026-05-21T10:26:28+00:00",
-    "notes": "Auto-categorized from the LUSTAT dataflow list."
+    "notes": "Official LUSTAT tourism arrivals dataflow. Kept unmapped until dimensions and default filters are reviewed for a public chart.",
+    "source_page_url": "https://lustat.statec.lu/vis?lc=en&tm=DF_D5301&pg=0&snb=1&df[ds]=ds-release&df[id]=DSD_TOUR_ARR%40DF_D5301&df[ag]=LU1&df[vs]=1.0&dq=..A..._T..&lom=LASTNPERIODS&lo=1&to[TIME_PERIOD]=false"
   },
   {
     "dataset_id": "DSD_TOUR_ARR@DF_D5350",

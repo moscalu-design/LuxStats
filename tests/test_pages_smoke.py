@@ -23,12 +23,13 @@ def test_expected_pages_are_present() -> None:
         "12_About_Data.py",
         "13_Source_Library.py",
         "14_Economy.py",
+        "15_Tourism.py",
     }
     assert expected.issubset(PAGE_TEXT)
 
 
 def test_topic_pages_render_topic_page() -> None:
-    for page in ["6_Housing.py", "8_Population.py", "9_Labour_Market.py", "10_Prices_Inflation.py"]:
+    for page in ["6_Housing.py", "8_Population.py", "9_Labour_Market.py", "10_Prices_Inflation.py", "15_Tourism.py"]:
         assert "render_topic_page(" in PAGE_TEXT[page]
 
 

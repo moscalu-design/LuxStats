@@ -88,6 +88,19 @@ def test_catalog_summary_shape() -> None:
         assert key in summary
 
 
+def test_tourism_sources_are_cataloged() -> None:
+    records = load_unified_source_catalog()
+    by_id = {record["source_id"]: record for record in records}
+    api = by_id["api:DSD_TOUR_ARR@DF_D5301"]
+    excel = by_id["file:D5310.xlsx"]
+    assert api["category"] == "Tourism"
+    assert api["dataset_id"] == "DSD_TOUR_ARR@DF_D5301"
+    assert "lustat.statec.lu/vis" in api["source_page_url"]
+    assert excel["category"] == "Tourism"
+    assert excel["dataset_id"] == "STATEC_XLS_TOURISM_ACTIVITY_D5310"
+    assert "D5310.xlsx" in excel["file_url"]
+
+
 def test_build_unified_catalog_runs() -> None:
     # Builds from saved sub-catalogs; returns an empty list if none exist.
     assert isinstance(build_unified_source_catalog(), list)

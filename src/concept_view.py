@@ -70,15 +70,16 @@ def build_series(concept: Concept, raw: pd.DataFrame) -> pd.DataFrame:
         return empty
     work["Year"] = work["Year"].astype(int)
 
+    aggregation = "sum" if concept.annual_aggregation == "sum" else "mean"
     if series_col:
-        tidy = work.groupby(["Year", series_col], as_index=False)["OBS_VALUE"].mean()
+        tidy = work.groupby(["Year", series_col], as_index=False)["OBS_VALUE"].agg(aggregation)
         tidy = tidy.rename(columns={series_col: "Series", "OBS_VALUE": "Value"})
         if concept.series_labels:
             tidy["Series"] = tidy["Series"].map(
                 lambda name: concept.series_labels.get(name, name)
             )
     else:
-        tidy = work.groupby("Year", as_index=False)["OBS_VALUE"].mean()
+        tidy = work.groupby("Year", as_index=False)["OBS_VALUE"].agg(aggregation)
         tidy = tidy.rename(columns={"OBS_VALUE": "Value"})
         tidy["Series"] = concept.title
 

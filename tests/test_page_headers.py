@@ -7,7 +7,7 @@ def test_required_page_headers_exist() -> None:
     for page_id in [
         "home", "find", "commune", "compare", "builder", "changes",
         "housing", "salaries", "population", "labour", "prices", "economy",
-        "source_library", "dataset_explorer", "about",
+        "tourism", "source_library", "dataset_explorer", "about",
     ]:
         header = get_page_header(page_id)
         assert header.title
@@ -18,3 +18,4 @@ def test_headers_are_not_generic_duplicates() -> None:
     titles = [header.title for header in PAGE_HEADERS.values()]
     assert len(titles) == len(set(titles))
     assert get_page_header("source_library").title == "Source Library"
+    assert get_page_header("about").title == "About Data"

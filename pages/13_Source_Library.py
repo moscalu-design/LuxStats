@@ -37,6 +37,9 @@ def _readiness() -> list[dict]:
 
 
 render_page_header("source_library", eyebrow="Advanced")
+st.caption(
+    "Use this as the admin-style readiness view. Normal browsing starts from Home, Find a Statistic, or topic pages."
+)
 
 records = enrich_with_mapping_status(_catalog())
 if not records:
@@ -64,7 +67,8 @@ with st.container(border=True):
     cols[3].metric("Publication annexes", f"{coverage['publication_annexes']:,}")
     cols[4].metric("Needs mapping", f"{coverage['unmapped_high_priority']:,}")
 
-render_visualization_summary(readiness_rows)
+with st.expander("Visualization readiness summary", expanded=False):
+    render_visualization_summary(readiness_rows)
 
 quick_cols = st.columns(3)
 with quick_cols[0]:
@@ -104,52 +108,54 @@ families = ["All"] + sorted({r["publication_family"] for r in records
                              if r.get("publication_family")})
 file_types = ["All"] + sorted({r["file_type"] for r in records if r.get("file_type")})
 
+section_header("Find official sources", "Filter by readiness, topic, source type or geography.")
 query = st.text_input(
     "Search sources",
     placeholder="housing prices · salaries by commune · inflation · tourism…",
 )
 
-row1 = st.columns(3)
-with row1[0]:
-    category = st.selectbox("Category", categories)
-with row1[1]:
-    source_type = st.selectbox("Source type", ["All"] + SOURCE_TYPES)
-with row1[2]:
-    geo = st.selectbox("Geographic level",
-                       ["All", "national", "commune", "canton", "region", "unknown"])
-row2 = st.columns(3)
-with row2[0]:
-    priority = st.selectbox("Priority", ["All", "high", "medium", "low"])
-with row2[1]:
-    family = st.selectbox("Publication family", families)
-with row2[2]:
-    file_type = st.selectbox("File type", file_types)
-row3 = st.columns(2)
-with row3[0]:
-    rec_portal = st.checkbox("Recommended for the portal only")
-with row3[1]:
-    rec_commune = st.checkbox("Commune-level only")
-row4 = st.columns(2)
-with row4[0]:
-    mapping_status = st.selectbox(
-        "Mapping status",
-        ["All", "mapped_to_metric", "mapped_to_commune_portal", "unmapped", "needs_manual_review", "ignored_low_priority"],
-    )
-with row4[1]:
-    show_count = st.selectbox("Rows to show", [50, 100, 250, 500], index=1)
-row5 = st.columns(2)
-status_default = st.session_state.pop("source_status_filter", "All")
-with row5[0]:
-    visualization_status = st.selectbox(
-        "Visualization readiness",
-        readiness_options(),
-        index=readiness_options().index(status_default) if status_default in readiness_options() else 0,
-    )
-with row5[1]:
-    sort_mode = st.selectbox(
-        "Sort by",
-        ["Chart-ready first", "High priority first", "Source type", "Category"],
-    )
+with st.expander("Filters", expanded=True):
+    row1 = st.columns(3)
+    with row1[0]:
+        category = st.selectbox("Category", categories)
+    with row1[1]:
+        source_type = st.selectbox("Source type", ["All"] + SOURCE_TYPES)
+    with row1[2]:
+        geo = st.selectbox("Geographic level",
+                           ["All", "national", "commune", "canton", "region", "unknown"])
+    row2 = st.columns(3)
+    with row2[0]:
+        priority = st.selectbox("Priority", ["All", "high", "medium", "low"])
+    with row2[1]:
+        family = st.selectbox("Publication family", families)
+    with row2[2]:
+        file_type = st.selectbox("File type", file_types)
+    row3 = st.columns(2)
+    with row3[0]:
+        rec_portal = st.checkbox("Recommended for the portal only")
+    with row3[1]:
+        rec_commune = st.checkbox("Commune-level only")
+    row4 = st.columns(2)
+    with row4[0]:
+        mapping_status = st.selectbox(
+            "Mapping status",
+            ["All", "mapped_to_metric", "mapped_to_commune_portal", "unmapped", "needs_manual_review", "ignored_low_priority"],
+        )
+    with row4[1]:
+        show_count = st.selectbox("Rows to show", [50, 100, 250, 500], index=1)
+    row5 = st.columns(2)
+    status_default = st.session_state.pop("source_status_filter", "All")
+    with row5[0]:
+        visualization_status = st.selectbox(
+            "Visualization readiness",
+            readiness_options(),
+            index=readiness_options().index(status_default) if status_default in readiness_options() else 0,
+        )
+    with row5[1]:
+        sort_mode = st.selectbox(
+            "Sort by",
+            ["Chart-ready first", "High priority first", "Source type", "Category"],
+        )
 
 filters = {
     "category": category,
@@ -210,9 +216,10 @@ table = pd.DataFrame([
     }
     for r in results[:show_count]
 ])
-st.dataframe(table, use_container_width=True, hide_index=True)
-if len(results) > show_count:
-    st.caption(f"Showing the first {show_count} rows — narrow the filters to see the rest.")
+with st.expander("Matching sources table", expanded=False):
+    st.dataframe(table, use_container_width=True, hide_index=True)
+    if len(results) > show_count:
+        st.caption(f"Showing the first {show_count} rows — narrow the filters to see the rest.")
 
 with st.expander("Recommended next mappings", expanded=False):
     st.caption("High-priority official sources that are not yet mapped to a chart or commune profile.")

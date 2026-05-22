@@ -50,8 +50,13 @@ def render_visualization_summary(rows: list[dict[str, Any]]) -> None:
 
 
 def render_status_badge(status: str) -> None:
+    status_class = (
+        f"lux-status-{status.replace('_', '-')}"
+        if status in {"chart_ready", "preview_ready", "downloadable_only"}
+        else "lux-status-unresolved"
+    )
     st.markdown(
-        f"<span class='lux-tag'>{status_label(status)}</span>",
+        f"<span class='lux-tag {status_class}'>{status_label(status)}</span>",
         unsafe_allow_html=True,
     )
 

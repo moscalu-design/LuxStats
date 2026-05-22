@@ -24,6 +24,7 @@ THEME_ORDER = [
     "Labour Market",
     "Prices & Inflation",
     "Economy",
+    "Tourism",
     "Education",
     "Mobility",
     "Public Finance",

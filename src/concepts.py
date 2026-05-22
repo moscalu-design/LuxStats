@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from src.data.excel_sources import AVERAGE_PRICES_ID, HOUSE_PRICE_INDEX_ID
+from src.data.excel_sources import AVERAGE_PRICES_ID, HOUSE_PRICE_INDEX_ID, TOURISM_ACTIVITY_ID
 
 
 @dataclass(frozen=True)
@@ -36,6 +36,7 @@ class Concept:
     filters: dict[str, str] = field(default_factory=dict)    # fixed dimension filters
     freq: str | None = None          # FREQ_LABEL value to keep (e.g. "Annual")
     transform: str | None = None     # None or "yoy" (year-over-year % change)
+    annual_aggregation: str = "mean" # "mean" or "sum" when collapsing sub-annual data
     unit_note: str = ""              # short note about the unit shown
     caveat: str = ""                 # honest caveat about the data
     recommended: bool = True
@@ -285,6 +286,29 @@ CONCEPTS: list[Concept] = [
         "a finished home.",
         recommended=True,
         popular=False,
+    ),
+    Concept(
+        id="tourism_accommodation_activity",
+        title="Tourism accommodation activity",
+        description="Monthly arrivals and overnight stays in Luxembourg tourist accommodation, shown as annual totals.",
+        topic="Tourism",
+        keywords=[
+            "tourism", "tourist", "tourists", "arrivals", "accommodation",
+            "hotels", "overnight stays", "nights", "hotel activity",
+            "tourism activity", "luxembourg tourism", "D5310",
+        ],
+        dataset_id=TOURISM_ACTIVITY_ID,
+        chart="line",
+        value_format="number",
+        series_dim="SPECIFICATION",
+        default_series=["Arrivals", "Overnight stays"],
+        annual_aggregation="sum",
+        explanation="The lines sum the monthly official counts across published tourist regions and accommodation types. Arrivals count guests; overnight stays count nights spent.",
+        unit_note="Annual total count, summed from monthly STATEC D5310 rows.",
+        caveat="Monthly figures are provisional until definitive annual results are calculated. The source workbook groups some camping regions differently from hotels.",
+        recommended=True,
+        popular=False,
+        geographic_level="region",
     ),
     Concept(
         id="home_size",

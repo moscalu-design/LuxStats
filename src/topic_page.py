@@ -28,6 +28,7 @@ _TOPIC_CATEGORY: dict[str, str] = {
     "Labour Market": "Labour Market",
     "Prices & Inflation": "Prices / Inflation",
     "Economy": "Economy / National Accounts",
+    "Tourism": "Tourism",
 }
 
 # Plain-language framing for each topic page: (icon, headline, intro).
@@ -69,6 +70,12 @@ TOPIC_INTRO: dict[str, tuple[str, str, str]] = {
         "signals. Chart-ready views are added only when the official source "
         "is mapped safely.",
     ),
+    "Tourism": (
+        "",
+        "Tourism",
+        "Official Luxembourg tourism statistics, including accommodation arrivals "
+        "and related short-term indicators.",
+    ),
 }
 
 _FALLBACK_INTRO = ("📊", "Statistics", "Explore official Luxembourg statistics for this topic.")
@@ -80,6 +87,7 @@ _TOPIC_PAGE_ID = {
     "Labour Market": "labour",
     "Prices & Inflation": "prices",
     "Economy": "economy",
+    "Tourism": "tourism",
 }
 
 # Cross-topic navigation shown at the foot of every topic page.
@@ -90,6 +98,7 @@ _NAV: list[tuple[str, str, str, str]] = [
     ("Labour Market", "pages/9_Labour_Market.py", "Jobs & unemployment", "🧰"),
     ("Prices & Inflation", "pages/10_Prices_Inflation.py", "Prices & inflation", "📈"),
     ("Economy", "pages/14_Economy.py", "Economy", "🏦"),
+    ("Tourism", "pages/15_Tourism.py", "Tourism", ""),
 ]
 
 
@@ -126,10 +135,6 @@ def render_topic_page(topic: str) -> None:
             "and download the data.",
         )
 
-    category = _TOPIC_CATEGORY.get(topic)
-    if category:
-        render_source_coverage_badges(category, label=f"{topic} coverage")
-
     for concept in concepts:
         render_concept(concept, key=f"topic_{concept.id}")
 
@@ -137,6 +142,10 @@ def render_topic_page(topic: str) -> None:
         render_nationality_section()
 
     st.divider()
+    category = _TOPIC_CATEGORY.get(topic)
+    if category:
+        with st.expander(f"{topic} source readiness", expanded=False):
+            render_source_coverage_badges(category, label=f"{topic} coverage")
     _render_chart_ready_sources(topic)
     _render_topic_sources(topic)
     _render_go_deeper()
@@ -186,10 +195,10 @@ def _render_go_deeper() -> None:
     left, right = st.columns(2)
     with left:
         st.page_link("pages/4_Compare.py", label="Compare sectors, groups or communes",
-                     icon="📊", use_container_width=True)
+                     use_container_width=True)
     with right:
         st.page_link("pages/2_Build_a_Chart.py", label="Build your own chart",
-                     icon="🛠️", use_container_width=True)
+                     use_container_width=True)
 
 
 def _render_more_topics(current: str) -> None:
@@ -197,6 +206,6 @@ def _render_more_topics(current: str) -> None:
     section_header("Explore another topic")
     others = [item for item in _NAV if item[0] != current]
     cols = st.columns(len(others))
-    for col, (_topic, page, label, icon) in zip(cols, others):
+    for col, (_topic, page, label, _icon) in zip(cols, others):
         with col:
-            st.page_link(page, label=label, icon=icon, use_container_width=True)
+            st.page_link(page, label=label, use_container_width=True)

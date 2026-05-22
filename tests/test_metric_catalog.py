@@ -38,3 +38,11 @@ def test_concepts_for_topic_filters() -> None:
     salary = concepts_for_topic("Salaries")
     assert salary
     assert all(c.topic == "Salaries" for c in salary)
+
+
+def test_tourism_concept_uses_reviewed_excel_mapping() -> None:
+    concept = get_concept("tourism_accommodation_activity")
+    assert concept is not None
+    assert concept.topic == "Tourism"
+    assert concept.dataset_id == "STATEC_XLS_TOURISM_ACTIVITY_D5310"
+    assert concept.annual_aggregation == "sum"

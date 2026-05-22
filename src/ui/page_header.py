@@ -16,7 +16,10 @@ class PageHeader:
 
 
 PAGE_HEADERS: dict[str, PageHeader] = {
-    "home": PageHeader("Luxembourg Statistics Explorer", "Find official Luxembourg statistics in seconds."),
+    "home": PageHeader(
+        "Luxembourg Statistics Explorer",
+        "Search a topic, open a curated chart, or inspect the official source when you need the details.",
+    ),
     "find": PageHeader("Find a Statistic", "Search official Luxembourg statistics, charts, communes, and source records."),
     "commune": PageHeader("Commune Portal", "Choose a commune and explore local statistics in one place."),
     "compare": PageHeader("Compare Statistics", "Compare communes, sectors, years, and indicators using official data."),
@@ -28,9 +31,13 @@ PAGE_HEADERS: dict[str, PageHeader] = {
     "labour": PageHeader("Labour Market", "Track employment, unemployment, jobseekers, vacancies, and labour indicators."),
     "prices": PageHeader("Prices & Inflation", "Follow consumer prices, inflation, CPI components, and cost-of-living indicators."),
     "economy": PageHeader("Economy", "Explore GDP, short-term indicators, confidence, and economic activity."),
-    "source_library": PageHeader("Source Library", "Browse all official STATEC/LUSTAT sources connected to LuxStats."),
-    "dataset_explorer": PageHeader("Dataset Explorer", "Inspect chart-ready datasets and LUSTAT API data in detail."),
-    "about": PageHeader("About the Data", "Learn how LuxStats uses official STATEC/LUSTAT sources."),
+    "tourism": PageHeader(
+        "Tourism",
+        "Official Luxembourg tourism statistics, including accommodation arrivals and related short-term indicators.",
+    ),
+    "source_library": PageHeader("Source Library", "Advanced inventory of official sources, readiness states, and mapping work."),
+    "dataset_explorer": PageHeader("Dataset Explorer", "Advanced inspection for curated API entries and live LUSTAT dataflows."),
+    "about": PageHeader("About Data", "Learn how LuxStats uses official STATEC/LUSTAT sources."),
 }
 
 

@@ -103,6 +103,15 @@ QUESTION_TEMPLATES: tuple[QuestionTemplate, ...] = (
         "population_growth",
     ),
     QuestionTemplate(
+        "tourism_activity",
+        "How is tourism activity changing?",
+        "Track official tourism arrivals and accommodation indicators.",
+        "Tourism",
+        ("tourism", "tourist arrivals", "hotels", "overnight stays", "accommodation", "D5310"),
+        "pages/15_Tourism.py",
+        "tourism_accommodation_activity",
+    ),
+    QuestionTemplate(
         "commune_profile",
         "How does my commune compare?",
         "Open a local profile with mapped commune-level metrics.",
@@ -165,6 +174,7 @@ def _category_for_topic(topic: str) -> str:
         "Prices & Inflation": "Prices / Inflation",
         "Labour Market": "Labour Market",
         "Population": "Population",
+        "Tourism": "Tourism",
         "Communes": "Communes / Geography",
         "Updates": "Other / Unknown",
     }.get(topic, topic)

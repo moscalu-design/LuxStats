@@ -52,3 +52,11 @@ def test_visualization_index_shape_and_counts() -> None:
     assert get_chart_ready_sources()
     assert get_sources_needing_mapping()
     assert get_sources_needing_review()
+
+
+def test_tourism_readiness_states_are_safe() -> None:
+    index = {row["source_id"]: row for row in load_source_visualization_index()}
+    assert index["file:D5310.xlsx"]["visualization_status"] == "chart_ready"
+    assert index["file:D5310.xlsx"]["mapped_metric_id"] == "tourism_accommodation_activity"
+    assert index["api:DSD_TOUR_ARR@DF_D5301"]["visualization_status"] == "needs_column_mapping"
+    assert not index["api:DSD_TOUR_ARR@DF_D5301"].get("mapped_metric_id")

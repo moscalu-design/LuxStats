@@ -29,12 +29,18 @@ from src.config import CACHE_DIR
 EXCEL_ID_PREFIX = "STATEC_XLS_"
 HOUSE_PRICE_INDEX_ID = "STATEC_XLS_HOUSE_PRICE_INDEX"
 AVERAGE_PRICES_ID = "STATEC_XLS_AVERAGE_PRICES"
+TOURISM_ACTIVITY_ID = "STATEC_XLS_TOURISM_ACTIVITY_D5310"
 
 D4011_URL = (
     "https://statistiques.public.lu/dam-assets/fr/donnees-autres-formats/"
     "indicateurs-court-terme/economie-totale-prix/D4011.xls"
 )
 D4011_PATH = CACHE_DIR / "statec" / "D4011.xls"
+D5310_URL = (
+    "https://statistiques.public.lu/dam-assets/fr/donnees-autres-formats/"
+    "indicateurs-court-terme/entreprises/D5310.xlsx"
+)
+D5310_PATH = CACHE_DIR / "statec" / "D5310.xlsx"
 DOWNLOAD_TTL_SECONDS = 7 * 24 * 3600
 
 # Series offered by each dataset: column index in the workbook -> friendly name.
@@ -80,6 +86,26 @@ def _download_d4011(force_refresh: bool = False) -> Path:
     resp.raise_for_status()
     D4011_PATH.write_bytes(resp.content)
     return D4011_PATH
+
+
+def _download_d5310(force_refresh: bool = False) -> Path:
+    """Ensure the D5310 tourism workbook is cached locally; return its path."""
+    D5310_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fresh = (
+        D5310_PATH.exists()
+        and D5310_PATH.stat().st_size > 0
+        and time.time() - D5310_PATH.stat().st_mtime < DOWNLOAD_TTL_SECONDS
+    )
+    if fresh and not force_refresh:
+        return D5310_PATH
+    resp = requests.get(
+        D5310_URL,
+        headers={"User-Agent": "Mozilla/5.0 (LuxStats statistics portal)"},
+        timeout=60,
+    )
+    resp.raise_for_status()
+    D5310_PATH.write_bytes(resp.content)
+    return D5310_PATH
 
 
 # --------------------------------------------------------------------------
@@ -154,6 +180,9 @@ def _parse_quarterly_block(sheet, series: dict[int, str]) -> pd.DataFrame:
 @lru_cache(maxsize=8)
 def _parse_dataset(dataset_id: str, path_key: str) -> pd.DataFrame:
     """Parse one Excel-backed dataset (cached by file path + mtime)."""
+    if dataset_id == TOURISM_ACTIVITY_ID:
+        return _parse_tourism_activity()
+
     import xlrd  # imported lazily so the rest of the app never needs it
 
     book = xlrd.open_workbook(D4011_PATH)
@@ -168,12 +197,51 @@ def _parse_dataset(dataset_id: str, path_key: str) -> pd.DataFrame:
     raise ValueError(f"Unknown Excel dataset id: {dataset_id}")
 
 
+def _parse_tourism_sheet(path: Path, sheet_name: str, indicator: str) -> pd.DataFrame:
+    """Parse one D5310 English sheet into monthly tidy rows."""
+    wide = pd.read_excel(path, sheet_name=sheet_name, dtype=str)
+    if wide.shape[1] < 3:
+        return pd.DataFrame(columns=["TIME_PERIOD", "OBS_VALUE", "SPECIFICATION"])
+
+    region_col = str(wide.columns[0])
+    type_col = str(wide.columns[1])
+    month_cols = [col for col in wide.columns[2:] if re.fullmatch(r"\d{4}\.\d{2}", str(col))]
+    if not month_cols:
+        return pd.DataFrame(columns=["TIME_PERIOD", "OBS_VALUE", "SPECIFICATION"])
+
+    tidy = wide.melt(
+        id_vars=[region_col, type_col],
+        value_vars=month_cols,
+        var_name="TIME_PERIOD",
+        value_name="OBS_VALUE",
+    )
+    tidy["OBS_VALUE"] = pd.to_numeric(tidy["OBS_VALUE"], errors="coerce")
+    tidy = tidy.dropna(subset=["OBS_VALUE"])
+    tidy["TIME_PERIOD"] = tidy["TIME_PERIOD"].astype(str).str.replace(".", "-", regex=False)
+    tidy["SPECIFICATION"] = indicator
+    tidy["REGION"] = tidy[region_col]
+    tidy["ACCOMMODATION_TYPE"] = tidy[type_col]
+    return tidy[["TIME_PERIOD", "OBS_VALUE", "SPECIFICATION", "REGION", "ACCOMMODATION_TYPE"]]
+
+
+def _parse_tourism_activity() -> pd.DataFrame:
+    """Parse D5310 arrivals and overnight stays from reviewed English sheets."""
+    frames = [
+        _parse_tourism_sheet(D5310_PATH, "arrivals", "Arrivals"),
+        _parse_tourism_sheet(D5310_PATH, "overnight stays", "Overnight stays"),
+    ]
+    frames = [frame for frame in frames if not frame.empty]
+    if not frames:
+        return pd.DataFrame(columns=["TIME_PERIOD", "OBS_VALUE", "SPECIFICATION"])
+    return pd.concat(frames, ignore_index=True)
+
+
 def get_excel_dataset(dataset_id: str, refresh: bool = False) -> pd.DataFrame:
     """Return a tidy TIME_PERIOD/OBS_VALUE/SPECIFICATION frame for a STATEC
     Excel-backed dataset. Raises on download or parsing failure so callers can
     show a friendly error state."""
     if not is_excel_dataset(dataset_id):
         raise ValueError(f"{dataset_id} is not a STATEC Excel dataset.")
-    path = _download_d4011(force_refresh=refresh)
+    path = _download_d5310(force_refresh=refresh) if dataset_id == TOURISM_ACTIVITY_ID else _download_d4011(force_refresh=refresh)
     # path mtime is part of the cache key so a refreshed file is re-parsed.
     return _parse_dataset(dataset_id, f"{path}:{path.stat().st_mtime_ns}").copy()

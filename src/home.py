@@ -10,7 +10,7 @@ from src.data.analysis_cards import commune_cards, comparison_cards, popular_car
 from src.data.communes import list_communes
 from src.data.priority_topics import home_question_cards
 from src.search import NO_RESULTS_HINT, search_communes, search_concepts, search_source_visualizations
-from src.ui.cards import render_analysis_grid, render_metric_grid
+from src.ui.cards import render_analysis_grid, render_metric_grid, render_question_grid
 from src.ui.catalog_views import render_coverage_section, render_source_coverage_badges
 from src.ui.page_header import render_page_header
 from src.ui.source_visualizer import status_label
@@ -30,6 +30,8 @@ TOPIC_CARDS = [
      "pages/10_Prices_Inflation.py"),
     ("📍", "Commune Portal", "Choose one commune and see local statistics in one place.",
      "pages/3_Commune_Portal.py"),
+    ("", "Tourism", "Accommodation arrivals, overnight stays, and short-term tourism indicators.",
+     "pages/15_Tourism.py"),
 ]
 
 
@@ -53,9 +55,15 @@ def _render_topic_grid() -> None:
         for col, (icon, name, blurb, page) in zip(cols, TOPIC_CARDS[row_start:row_start + 3]):
             with col:
                 with st.container(border=True):
-                    st.markdown(f"### {icon} {name}")
+                    st.markdown(f"**{name}**")
                     st.caption(blurb)
                     st.page_link(page, label=f"Explore {name}", use_container_width=True)
+
+
+def _status_badge_class(status: str) -> str:
+    if status in {"chart_ready", "preview_ready", "downloadable_only"}:
+        return f"lux-status-{status.replace('_', '-')}"
+    return "lux-status-unresolved"
 
 
 def _render_search_results(query: str) -> None:
@@ -67,7 +75,7 @@ def _render_search_results(query: str) -> None:
         f"Results for “{query.strip()}”",
         f"{total} matching result(s)" if total else "",
     )
-    if not results and not commune_results:
+    if not results and not commune_results and not source_hits:
         st.info(NO_RESULTS_HINT)
         return
     if commune_results:
@@ -77,40 +85,44 @@ def _render_search_results(query: str) -> None:
         render_metric_grid(results, key_prefix="search", columns=2)
     if source_hits:
         section_header("Source-backed matches")
-        for row in source_hits[:5]:
-            with st.container(border=True):
-                st.markdown(
-                    f"<span class='lux-tag'>{row['category']}</span> "
-                    f"<span class='lux-tag'>{status_label(row['visualization_status'])}</span>",
-                    unsafe_allow_html=True,
-                )
-                st.markdown(f"**{row['title']}**")
-                st.caption(row["reason"])
-                if row["visualization_status"] == "chart_ready" and row.get("mapped_metric_id"):
-                    if st.button("Open chart", key=f"home_src_{row['source_id']}", use_container_width=True):
-                        st.session_state["open_concept"] = row["mapped_metric_id"]
-                        st.rerun()
-                else:
-                    st.page_link("pages/13_Source_Library.py", label=row["recommended_action"], use_container_width=True)
+        grouped = [
+            ("Chart-ready concepts", {"chart_ready"}),
+            ("Preview-ready sources", {"preview_ready"}),
+            ("Downloadable-only sources", {"downloadable_only"}),
+            ("Unresolved official sources", set()),
+        ]
+        shown: set[str] = set()
+        for label, statuses in grouped:
+            rows = [
+                row for row in source_hits[:5]
+                if row["source_id"] not in shown
+                and (row["visualization_status"] in statuses if statuses else row["visualization_status"] not in {"chart_ready", "preview_ready", "downloadable_only"})
+            ]
+            if not rows:
+                continue
+            st.caption(label)
+            for row in rows:
+                shown.add(row["source_id"])
+                with st.container(border=True):
+                    badge_class = _status_badge_class(row["visualization_status"])
+                    st.markdown(
+                        f"<span class='lux-tag'>{row['category']}</span> "
+                        f"<span class='lux-tag {badge_class}'>{status_label(row['visualization_status'])}</span>",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(f"**{row['title']}**")
+                    st.caption(row["reason"])
+                    if row["visualization_status"] == "chart_ready" and row.get("mapped_metric_id"):
+                        if st.button("Open chart", key=f"home_src_{row['source_id']}", use_container_width=True):
+                            st.session_state["open_concept"] = row["mapped_metric_id"]
+                            st.rerun()
+                    else:
+                        st.page_link("pages/13_Source_Library.py", label=row["recommended_action"], use_container_width=True)
 
 
 def _render_question_cards() -> None:
     cards = home_question_cards(limit=8)
-    for start in range(0, len(cards), 4):
-        cols = st.columns(4)
-        for col, card in zip(cols, cards[start:start + 4]):
-            with col:
-                with st.container(border=True):
-                    st.markdown(f"<span class='lux-tag'>{card['topic']}</span>", unsafe_allow_html=True)
-                    st.markdown(f"**{card['question']}**")
-                    st.caption(str(card["description"]))
-                    st.caption(f"{card['source_count']:,} source(s) · {card['status']}")
-                    if st.button("Open →", key=f"home_question_{card['id']}", use_container_width=True):
-                        if card.get("concept_id"):
-                            st.session_state["open_concept"] = card["concept_id"]
-                            st.rerun()
-                        else:
-                            st.switch_page(str(card["page"]))
+    render_question_grid(cards, key_prefix="home_question", columns=4)
 
 
 def _render_commune_quick_search() -> None:
@@ -153,6 +165,18 @@ def render_home() -> None:
         _render_search_results(query)
         return
 
+    st.markdown(
+        """
+        <div class="lux-howto">
+            <div class="lux-howto-step"><strong>Search a topic</strong><span>Use everyday words like salary, housing, population or inflation.</span></div>
+            <div class="lux-howto-step"><strong>Open a question</strong><span>Start from a curated public-interest card when you are not sure what to search.</span></div>
+            <div class="lux-howto-step"><strong>View official data</strong><span>Chart-ready concepts use confirmed mappings only.</span></div>
+            <div class="lux-howto-step"><strong>Inspect sources</strong><span>Open source links and readiness details when you need the record behind a chart.</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     section_header("Start with a question",
                    "Source-backed entry points for the statistics people ask for most.")
     _render_question_cards()
@@ -177,7 +201,7 @@ def render_home() -> None:
         render_analysis_grid(commune_cards(), key_prefix="commune", columns=2)
 
     with st.container(border=True):
-        st.markdown("#### 🆕 What changed recently?")
+        st.markdown("#### What changed recently?")
         st.caption(
             "See the latest official figures and the biggest recent moves in "
             "housing, salaries, population, jobs and prices."
@@ -198,7 +222,7 @@ def render_home() -> None:
         st.page_link("pages/13_Source_Library.py", label="Open the Source Library readiness view")
 
     with st.container(border=True):
-        st.markdown("#### 🔎 For advanced users")
+        st.markdown("#### For advanced users")
         st.caption(
             "Want the raw data? The Dataset Explorer lets you search all "
             "official STATEC / LUSTAT datasets, inspect dimensions, and export CSVs."

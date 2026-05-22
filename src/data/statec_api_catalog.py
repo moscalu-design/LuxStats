@@ -30,6 +30,24 @@ _PORTAL_CATEGORIES = {
     "Labour Market", "Prices / Inflation", "Economy / National Accounts",
 }
 
+_DATASET_OVERRIDES: dict[str, dict[str, Any]] = {
+    "DSD_TOUR_ARR@DF_D5301": {
+        "source_page_url": (
+            "https://lustat.statec.lu/vis?lc=en&tm=DF_D5301&pg=0&snb=1&"
+            "df[ds]=ds-release&df[id]=DSD_TOUR_ARR%40DF_D5301&df[ag]=LU1&"
+            "df[vs]=1.0&dq=..A..._T..&lom=LASTNPERIODS&lo=1&to[TIME_PERIOD]=false"
+        ),
+        "keywords": [
+            "tourism", "tourists", "arrivals", "accommodation", "hotels",
+            "overnight stays", "nights", "Luxembourg tourism", "D5301",
+        ],
+        "notes": (
+            "Official LUSTAT tourism arrivals dataflow. Kept unmapped until "
+            "dimensions and default filters are reviewed for a public chart."
+        ),
+    },
+}
+
 
 def fetch_lustat_dataflows(force_refresh: bool = False) -> list[Dataflow]:
     """Return every LUSTAT dataflow, using the on-disk dataflow cache."""
@@ -73,6 +91,8 @@ def build_api_catalog(force_refresh: bool = False) -> list[dict[str, Any]]:
         text = f"{title} {item['title_fr']} {dataset_id}"
         category = categorize_api_dataset(title, item["title_fr"], dataset_id)
         geo = infer_geographic_level(text)
+        override = _DATASET_OVERRIDES.get(dataset_id, {})
+        keywords = list(dict.fromkeys(extract_keywords(text) + override.get("keywords", [])))
         records.append(
             {
                 "dataset_id": dataset_id,
@@ -80,14 +100,15 @@ def build_api_catalog(force_refresh: bool = False) -> list[dict[str, Any]]:
                 "description": item["title_fr"],
                 "source_type": SOURCE_TYPE,
                 "source_url": _api_data_url(dataset_id, item["agency"], item["version"]),
+                "source_page_url": override.get("source_page_url", ""),
                 "category": category,
                 "subcategory": "",
-                "keywords": extract_keywords(text),
+                "keywords": keywords,
                 "geographic_level": geo,
                 "recommended_for_portal": category in _PORTAL_CATEGORIES,
                 "recommended_for_commune_portal": geo in {"commune", "canton"},
                 "last_catalog_refresh": now,
-                "notes": "Auto-categorized from the LUSTAT dataflow list.",
+                "notes": override.get("notes", "Auto-categorized from the LUSTAT dataflow list."),
             }
         )
     records.sort(key=lambda r: r["dataset_id"])

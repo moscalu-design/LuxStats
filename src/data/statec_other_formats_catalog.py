@@ -35,6 +35,24 @@ _EXCEL_EXT = {"xlsx", "xls"}
 _OTHER_EXT = {"csv", "zip"}
 _DATA_EXT = _EXCEL_EXT | _OTHER_EXT
 
+_FILE_OVERRIDES: dict[str, dict[str, Any]] = {
+    "D5310.xlsx": {
+        "title": "Arrivals and overnights",
+        "category": "Tourism",
+        "dataset_id": "STATEC_XLS_TOURISM_ACTIVITY_D5310",
+        "keywords": [
+            "tourism", "tourists", "arrivals", "accommodation", "hotels",
+            "overnight stays", "nights", "short-term indicators",
+            "enterprises", "Luxembourg tourism", "D5310",
+        ],
+        "geographic_level": "region",
+        "notes": (
+            "Reviewed STATEC short-term tourism workbook. English sheets "
+            "'arrivals' and 'overnight stays' have stable monthly columns."
+        ),
+    },
+}
+
 # Anchor with a data-file href: capture href, extension and link text.
 _ANCHOR_RE = re.compile(
     r'<a\b[^>]*href=["\']([^"\']+\.(xlsx|xls|csv|zip))["\'][^>]*>(.*?)</a>',
@@ -85,15 +103,20 @@ def build_other_formats_catalog(force_refresh: bool = False) -> list[dict[str, A
         file_url = item["file_url"]
         filename = _filename(file_url)
         file_type = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
-        title = item["title"] or filename
+        override = _FILE_OVERRIDES.get(filename, {})
+        title = override.get("title") or item["title"] or filename
         # The URL path (e.g. .../economie-totale-prix/prix/E5012.xls) carries
         # strong category signal alongside the human title.
         text = f"{title} {file_url}"
+        category = override.get("category") or categorize(text)
+        keywords = list(dict.fromkeys(extract_keywords(text) + override.get("keywords", [])))
+        geographic_level = override.get("geographic_level") or infer_geographic_level(text)
         records.append(
             {
                 "source_type": "STATEC_EXCEL" if file_type in _EXCEL_EXT else "OTHER_FORMAT",
                 "title": title,
-                "category": categorize(text),
+                "category": category,
+                "dataset_id": override.get("dataset_id", ""),
                 "source_page_url": item["source_page_url"],
                 "file_url": file_url,
                 "file_type": file_type,
@@ -101,14 +124,14 @@ def build_other_formats_catalog(force_refresh: bool = False) -> list[dict[str, A
                 "language": "fr" if "/fr/" in file_url else
                             ("en" if "/en/" in file_url else "unknown"),
                 "publication_date": None,
-                "keywords": extract_keywords(text),
-                "geographic_level": infer_geographic_level(text),
-                "looks_commune_level": infer_geographic_level(text) in {"commune", "canton"},
+                "keywords": keywords,
+                "geographic_level": geographic_level,
+                "looks_commune_level": geographic_level in {"commune", "canton"},
                 "looks_housing": looks_like_housing_data(text),
                 "looks_short_term": looks_like_short_term_indicator(text),
                 "should_import": file_type in _DATA_EXT,
                 "last_seen": now,
-                "notes": "Discovered from the STATEC list-of-tables-by-theme page.",
+                "notes": override.get("notes", "Discovered from the STATEC list-of-tables-by-theme page."),
             }
         )
     records.sort(key=lambda r: (r["category"], r["filename"]))

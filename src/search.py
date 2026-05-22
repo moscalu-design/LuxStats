@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from src.concepts import Concept, all_concepts
 from src.data.communes import extract_commune_from_query
+from src.data.source_catalog import load_unified_source_catalog
 from src.data.source_visualization import load_source_visualization_index
 
 # Synonym groups. Any word in a group expands the query with the whole group,
@@ -22,6 +23,8 @@ SYNONYM_GROUPS: list[list[str]] = [
     ["job", "jobs", "work", "employment", "unemployment", "labour", "labor"],
     ["inflation", "prices", "price", "cpi", "cost of living", "expensive"],
     ["commune", "communes", "municipality", "town", "city", "canton"],
+    ["tourism", "tourist", "tourists", "arrivals", "hotel", "hotels",
+     "overnight stays", "nights", "accommodation", "d5301", "d5310"],
 ]
 
 
@@ -117,12 +120,15 @@ def search_source_visualizations(query: str, limit: int = 10) -> list[dict]:
         "not_chartable": 5,
         "ignored_low_priority": 0,
     }
+    catalog_by_id = {row.get("source_id"): row for row in load_unified_source_catalog()}
     scored: list[tuple[int, str, dict]] = []
     for row in load_source_visualization_index():
+        source_record = catalog_by_id.get(row.get("source_id"), {})
         haystack = " ".join(
             str(row.get(field, ""))
             for field in ("title", "category", "source_type", "dataset_id", "source_id", "reason")
         ).casefold()
+        haystack = f"{haystack} {' '.join(source_record.get('keywords', []) or [])}".casefold()
         score = 0
         for term in terms:
             if term in haystack:
@@ -144,5 +150,5 @@ def search_source_visualizations(query: str, limit: int = 10) -> list[dict]:
 
 NO_RESULTS_HINT = (
     "No exact match found. Try searching for **salary**, **housing**, "
-    "**population**, **inflation**, **unemployment**, or a commune such as **Hesperange**."
+    "**population**, **inflation**, **unemployment**, **tourism**, or a commune such as **Hesperange**."
 )

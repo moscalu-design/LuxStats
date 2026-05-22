@@ -28,13 +28,13 @@ def cached_dataflows(_client: StatecClient, refresh_token: int = 0):
 
 render_page_header("dataset_explorer", eyebrow="Advanced")
 st.caption(
-    "Use this page for actual API data inspection. Use Source Library for the full source inventory and readiness status."
+    "Advanced inspection for curated API entries and live LUSTAT dataflows. Home and topic pages stay focused on confirmed chart-ready statistics."
 )
 
 _summary = catalog_summary()
 if _summary["total"]:
     with st.container(border=True):
-        st.markdown("#### 🗂️ Looking beyond the LUSTAT API?")
+        st.markdown("#### Looking beyond the LUSTAT API?")
         st.caption(
             f"The Source Library catalogs {_summary['total']:,} official sources — "
             f"{_summary['api']:,} LUSTAT API datasets, {_summary['excel']:,} Excel "
@@ -44,31 +44,35 @@ if _summary["total"]:
         st.page_link("pages/13_Source_Library.py", label="Open the Source Library")
 
 query = st.text_input("Search datasets", placeholder="house prices, wages, population, inflation...")
-theme_options = ["All"] + catalog_themes()
-theme = st.selectbox("Filter by topic", theme_options)
-recommended = st.checkbox("Recommended for dashboards only", value=False)
+filter_cols = st.columns(2)
+with filter_cols[0]:
+    theme_options = ["All"] + catalog_themes()
+    theme = st.selectbox("Filter by topic", theme_options)
+with filter_cols[1]:
+    recommended = st.checkbox("Recommended for dashboards only", value=False)
 
 curated = search_catalog(query=query, theme=theme, recommended_only=recommended)
 st.subheader("Curated catalog")
 if curated.empty:
     st.info("No curated entries match that search yet. Try a broader term or open live LUSTAT search below.")
 else:
-    st.dataframe(
-        curated[
-            [
-                "theme",
-                "friendly_title",
-                "description",
-                "dataset_id",
-                "geography",
-                "update_frequency",
-                "recommended",
-                "status",
-            ]
-        ],
-        use_container_width=True,
-        hide_index=True,
-    )
+    with st.expander("Catalog table", expanded=False):
+        st.dataframe(
+            curated[
+                [
+                    "theme",
+                    "friendly_title",
+                    "description",
+                    "dataset_id",
+                    "geography",
+                    "update_frequency",
+                    "recommended",
+                    "status",
+                ]
+            ],
+            use_container_width=True,
+            hide_index=True,
+        )
     selected_catalog_id = st.selectbox(
         "Open curated entry",
         curated["dataset_id"].tolist(),

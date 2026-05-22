@@ -418,7 +418,7 @@
   {
     "source_type": "STATEC_EXCEL",
     "title": "Arrivals and overnights",
-    "category": "Enterprises / Business",
+    "category": "Tourism",
     "source_page_url": "https://statistiques.public.lu/en/donnees/liste-tableaux-par-theme.html",
     "file_url": "https://statistiques.public.lu/dam-assets/fr/donnees-autres-formats/indicateurs-court-terme/entreprises/D5310.xlsx",
     "file_type": "xlsx",
@@ -437,15 +437,26 @@
       "autres",
       "formats",
       "indicateurs",
-      "court"
+      "court",
+      "tourism",
+      "tourists",
+      "accommodation",
+      "hotels",
+      "overnight stays",
+      "nights",
+      "short-term indicators",
+      "enterprises",
+      "Luxembourg tourism",
+      "D5310"
     ],
-    "geographic_level": "unknown",
+    "geographic_level": "region",
     "looks_commune_level": false,
     "looks_housing": false,
-    "looks_short_term": false,
+    "looks_short_term": true,
     "should_import": true,
     "last_seen": "2026-05-21T10:26:29+00:00",
-    "notes": "Discovered from the STATEC list-of-tables-by-theme page."
+    "notes": "Reviewed STATEC short-term tourism workbook. English sheets 'arrivals' and 'overnight stays' have stable monthly columns.",
+    "dataset_id": "STATEC_XLS_TOURISM_ACTIVITY_D5310"
   },
   {
     "source_type": "STATEC_EXCEL",
