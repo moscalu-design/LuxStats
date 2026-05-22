@@ -8,7 +8,7 @@ from src.data.source_catalog import search_source_catalog
 from src.data.source_mapping import enrich_with_mapping_status
 from src.search import NO_RESULTS_HINT, search_communes, search_concepts, search_source_visualizations
 from src.ui.cards import render_metric_grid
-from src.ui.catalog_views import render_source_coverage_badges, render_source_records
+from src.ui.catalog_views import render_source_records
 from src.ui.source_visualizer import status_label
 from src.ui.page_header import render_page_header
 from src.ui_components import configure_page, render_sidebar, section_header
@@ -111,9 +111,12 @@ if query.strip():
             )
         render_source_records(raw_sources, key_prefix="finder_sources", limit=6)
 else:
-    render_source_coverage_badges(label="What LuxStats can search")
+    st.caption(
+        "Type a question above, or browse every ready-to-chart statistic below. "
+        "Searching also reaches official sources that are not charted yet."
+    )
     section_header(
-        "All curated statistics",
-        "Every metric here is backed by a confirmed STATEC / LUSTAT dataset.",
+        "All ready-to-chart statistics",
+        "Each one is backed by a confirmed STATEC / LUSTAT dataset.",
     )
     render_metric_grid(all_concepts(), key_prefix="finder_all", columns=2)

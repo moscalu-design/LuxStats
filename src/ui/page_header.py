@@ -17,27 +17,69 @@ class PageHeader:
 
 PAGE_HEADERS: dict[str, PageHeader] = {
     "home": PageHeader(
-        "Luxembourg Statistics Explorer",
-        "Search a topic, open a curated chart, or inspect the official source when you need the details.",
+        "Luxembourg statistics, made easier",
+        "Search a topic, open a chart, or inspect the official source behind it.",
     ),
-    "find": PageHeader("Find a Statistic", "Search official Luxembourg statistics, charts, communes, and source records."),
-    "commune": PageHeader("Commune Portal", "Choose a commune and explore local statistics in one place."),
-    "compare": PageHeader("Compare Statistics", "Compare communes, sectors, years, and indicators using official data."),
-    "builder": PageHeader("Build a Chart", "Create a chart from chart-ready official sources in a few clicks."),
-    "changes": PageHeader("What Changed?", "See recent updates and movements in key Luxembourg indicators."),
-    "housing": PageHeader("Housing", "Explore housing prices, rents, construction, permits, and market indicators."),
-    "salaries": PageHeader("Salaries & Income", "Compare salaries, wages, income indicators, and minimum wage data."),
-    "population": PageHeader("Population", "Explore population growth, migration, ageing, fertility, and communes."),
-    "labour": PageHeader("Labour Market", "Track employment, unemployment, jobseekers, vacancies, and labour indicators."),
-    "prices": PageHeader("Prices & Inflation", "Follow consumer prices, inflation, CPI components, and cost-of-living indicators."),
-    "economy": PageHeader("Economy", "Explore GDP, short-term indicators, confidence, and economic activity."),
+    "find": PageHeader(
+        "Find a statistic",
+        "Search official Luxembourg statistics in plain words.",
+    ),
+    "commune": PageHeader(
+        "Commune portal",
+        "Pick a commune and see its local statistics in one profile.",
+    ),
+    "compare": PageHeader(
+        "Compare statistics",
+        "Put communes, sectors or groups side by side.",
+    ),
+    "builder": PageHeader(
+        "Build a chart",
+        "Create a chart from official statistics — no dataset codes needed.",
+    ),
+    "changes": PageHeader(
+        "What changed?",
+        "The latest official figures and the biggest recent moves.",
+    ),
+    "housing": PageHeader(
+        "Housing",
+        "Housing prices, construction and the size of new homes.",
+    ),
+    "salaries": PageHeader(
+        "Salaries & income",
+        "Pay by sector, the gender pay gap and the minimum wage.",
+    ),
+    "population": PageHeader(
+        "Population",
+        "How many people live in Luxembourg, and how that changes.",
+    ),
+    "labour": PageHeader(
+        "Labour market",
+        "Jobs, employment and unemployment over time.",
+    ),
+    "prices": PageHeader(
+        "Prices & inflation",
+        "Consumer prices and the cost of living.",
+    ),
+    "economy": PageHeader(
+        "Economy",
+        "GDP, short-term indicators and economic activity.",
+    ),
     "tourism": PageHeader(
         "Tourism",
-        "Official Luxembourg tourism statistics, including accommodation arrivals and related short-term indicators.",
+        "Accommodation arrivals and short-term tourism indicators.",
     ),
-    "source_library": PageHeader("Source Library", "Advanced inventory of official sources, readiness states, and mapping work."),
-    "dataset_explorer": PageHeader("Dataset Explorer", "Advanced inspection for curated API entries and live LUSTAT dataflows."),
-    "about": PageHeader("About Data", "Learn how LuxStats uses official STATEC/LUSTAT sources."),
+    "source_library": PageHeader(
+        "Source Library",
+        "Advanced: every official source, its readiness and mapping status.",
+    ),
+    "dataset_explorer": PageHeader(
+        "Dataset Explorer",
+        "Advanced: search raw LUSTAT datasets and export CSVs.",
+    ),
+    "about": PageHeader(
+        "About Data",
+        "Where the numbers come from and how to read this site.",
+    ),
 }
 
 

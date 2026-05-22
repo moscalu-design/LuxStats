@@ -1,9 +1,12 @@
 """Curated topic dashboard pages.
 
-A topic page is a thin, friendly wrapper around the curated concept layer:
-a plain-language intro followed by every ready-to-chart statistic for that
-topic. There are no raw dataset IDs or SDMX terms here — those stay tucked
-inside the "Source, units and advanced details" expander of each chart.
+A topic page is a friendly wrapper around the curated concept layer: a short
+intro, every ready-to-chart statistic for that topic, then official-source
+context tucked behind a single expander. Raw dataset IDs and SDMX terms never
+appear by default — they stay inside each chart's advanced details.
+
+Topics with no confirmed charts show an honest, calm limited state instead of
+pretending coverage exists.
 """
 
 from __future__ import annotations
@@ -22,7 +25,7 @@ from src.ui.catalog_views import render_source_coverage_badges, render_source_re
 from src.ui.nationality_explorer import render_nationality_section
 from src.ui.page_header import render_page_header
 from src.ui.source_visualizer import render_source_card, render_universal_source_viewer
-from src.ui_components import section_header
+from src.ui.theme import empty_state, section_header
 
 # Topic -> unified-catalog category, used to surface connected official sources.
 _TOPIC_CATEGORY: dict[str, str] = {
@@ -35,55 +38,6 @@ _TOPIC_CATEGORY: dict[str, str] = {
     "Tourism": "Tourism",
 }
 
-# Plain-language framing for each topic page: (icon, headline, intro).
-TOPIC_INTRO: dict[str, tuple[str, str, str]] = {
-    "Housing": (
-        "🏠",
-        "Housing in Luxembourg",
-        "How much new housing the country builds, and how big new homes are — "
-        "in plain language, straight from official figures.",
-    ),
-    "Salaries": (
-        "💶",
-        "Salaries in Luxembourg",
-        "What people earn here: typical pay by sector, how women's and men's "
-        "pay compare, and the legal minimum wage over time.",
-    ),
-    "Population": (
-        "👥",
-        "Luxembourg's population",
-        "How many people live in Luxembourg and how that has changed, including "
-        "the split between Luxembourgers and foreign residents.",
-    ),
-    "Labour Market": (
-        "🧰",
-        "Jobs & unemployment",
-        "How healthy the job market is — how many people are in work, and how "
-        "many are looking for a job.",
-    ),
-    "Prices & Inflation": (
-        "📈",
-        "Prices & inflation",
-        "The cost of living in Luxembourg: consumer prices over time and how "
-        "fast they rise each year.",
-    ),
-    "Economy": (
-        "🏦",
-        "Luxembourg's economy",
-        "GDP, short-term indicators, business activity and other economic "
-        "signals. Chart-ready views are added only when the official source "
-        "is mapped safely.",
-    ),
-    "Tourism": (
-        "",
-        "Tourism",
-        "Official Luxembourg tourism statistics, including accommodation arrivals "
-        "and related short-term indicators.",
-    ),
-}
-
-_FALLBACK_INTRO = ("📊", "Statistics", "Explore official Luxembourg statistics for this topic.")
-
 _TOPIC_PAGE_ID = {
     "Housing": "housing",
     "Salaries": "salaries",
@@ -95,15 +49,26 @@ _TOPIC_PAGE_ID = {
 }
 
 # Cross-topic navigation shown at the foot of every topic page.
-_NAV: list[tuple[str, str, str, str]] = [
-    ("Housing", "pages/6_Housing.py", "Housing", "🏠"),
-    ("Salaries", "pages/7_Salaries.py", "Salaries", "💶"),
-    ("Population", "pages/8_Population.py", "Population", "👥"),
-    ("Labour Market", "pages/9_Labour_Market.py", "Jobs & unemployment", "🧰"),
-    ("Prices & Inflation", "pages/10_Prices_Inflation.py", "Prices & inflation", "📈"),
-    ("Economy", "pages/14_Economy.py", "Economy", "🏦"),
-    ("Tourism", "pages/15_Tourism.py", "Tourism", ""),
+_NAV: list[tuple[str, str]] = [
+    ("Housing", "pages/6_Housing.py"),
+    ("Salaries & income", "pages/7_Salaries.py"),
+    ("Population", "pages/8_Population.py"),
+    ("Labour market", "pages/9_Labour_Market.py"),
+    ("Prices & inflation", "pages/10_Prices_Inflation.py"),
+    ("Economy", "pages/14_Economy.py"),
+    ("Tourism", "pages/15_Tourism.py"),
 ]
+
+# Topic -> page path, for the "you are here" check in the more-topics footer.
+_TOPIC_PAGE = {
+    "Housing": "pages/6_Housing.py",
+    "Salaries": "pages/7_Salaries.py",
+    "Population": "pages/8_Population.py",
+    "Labour Market": "pages/9_Labour_Market.py",
+    "Prices & Inflation": "pages/10_Prices_Inflation.py",
+    "Economy": "pages/14_Economy.py",
+    "Tourism": "pages/15_Tourism.py",
+}
 
 
 def render_topic_page(topic: str) -> None:
@@ -112,72 +77,70 @@ def render_topic_page(topic: str) -> None:
     if page_id:
         render_page_header(page_id, eyebrow="Topic")
     else:
-        icon, headline, intro = TOPIC_INTRO.get(topic, _FALLBACK_INTRO)
-        st.title(f"{icon} {headline}")
-        st.caption(intro)
+        st.title(topic)
 
     concepts = concepts_for_topic(topic)
-    if not concepts:
-        st.info(
-            "Chart-ready metrics for this topic are still being mapped. The "
-            "official sources are cataloged below, but they are kept out of "
-            "beginner charts until the mapping is confirmed."
-        )
-        category = _TOPIC_CATEGORY.get(topic)
-        if category:
-            render_source_coverage_badges(category, label=f"{topic} coverage")
-            sources = get_sources_by_category(category)
-            with st.expander("Official sources not yet mapped to charts", expanded=True):
-                render_source_records(sources, key_prefix=f"unmapped_{topic}", limit=8)
-        st.page_link("pages/13_Source_Library.py", label="Open the Source Library", icon="🗂️")
-        return
-
-    if len(concepts) > 1:
-        section_header(
-            "Charts in this section",
-            "Each card is a ready-made chart — explore it, read what it means, "
-            "and download the data.",
-        )
-
-    for concept in concepts:
-        render_concept(concept, key=f"topic_{concept.id}")
-
-    if topic == "Population":
-        render_nationality_section()
-
-    st.divider()
     category = _TOPIC_CATEGORY.get(topic)
-    if category:
-        with st.expander(f"{topic} source readiness", expanded=False):
-            render_source_coverage_badges(category, label=f"{topic} coverage")
-    _render_chart_ready_sources(topic)
-    _render_topic_sources(topic)
+
+    if concepts:
+        if len(concepts) > 1:
+            section_header(
+                "Charts in this topic",
+                "Each card is a ready-made chart — explore it, read what it "
+                "means, and download the data.",
+            )
+        for concept in concepts:
+            render_concept(concept, key=f"topic_{concept.id}")
+        if topic == "Population":
+            render_nationality_section()
+    else:
+        section_header("Charts in this topic")
+        empty_state(
+            "Confirmed charts are still being mapped",
+            "No statistic for this topic has a confirmed chart yet. The official "
+            "sources are cataloged below — LuxStats only charts them once the "
+            "mapping is verified, so nothing here is guessed.",
+        )
+
+    _render_sources_section(topic, category)
     _render_selected_topic_source(topic)
     _render_go_deeper()
     _render_more_topics(topic)
 
 
-def _render_chart_ready_sources(topic: str) -> None:
-    category = _TOPIC_CATEGORY.get(topic)
+def _render_sources_section(topic: str, category: str | None) -> None:
+    """One consolidated, collapsed section for official-source context."""
     if not category:
         return
-    ready = get_chart_ready_sources(category)
-    mapped_more = [row for row in ready if row.get("mapped_metric_id")]
-    if mapped_more:
-        with st.expander("More chart-ready source mappings", expanded=False):
-            st.caption("These official sources already have safe visualization routes in LuxStats.")
-            for row in mapped_more[:4]:
+    sources = get_sources_by_category(category)
+    chart_ready = [r for r in get_chart_ready_sources(category) if r.get("mapped_metric_id")]
+    needs_mapping = get_sources_needing_mapping(category)
+    if not sources and not chart_ready and not needs_mapping:
+        return
+
+    section_header("Official sources behind this topic")
+    with st.expander(f"Source coverage and readiness ({len(sources)} cataloged)",
+                     expanded=False):
+        render_source_coverage_badges(category, label=f"{topic} coverage")
+
+        if chart_ready:
+            st.caption("**More chart-ready sources** — already safe to visualize.")
+            for row in chart_ready[:4]:
                 if render_source_card(row, row, key=f"topic_ready_{row['source_id']}"):
                     st.session_state[f"topic_selected_source_{topic}"] = row["source_id"]
                     st.rerun()
-    needs = get_sources_needing_mapping(category)
-    if needs:
-        with st.expander("Sources available but not mapped yet", expanded=False):
-            st.caption("These sources are official and relevant, but need confirmed columns, filters, or sheet mapping before charting.")
-            for row in needs[:6]:
+
+        if needs_mapping:
+            st.caption("**Sources not yet mapped** — official and relevant, but "
+                       "they need confirmed columns or sheet mapping before charting.")
+            for row in needs_mapping[:5]:
                 if render_source_card(row, row, key=f"topic_needs_{row['source_id']}"):
                     st.session_state[f"topic_selected_source_{topic}"] = row["source_id"]
                     st.rerun()
+
+        if sources:
+            st.caption("**All cataloged sources for this topic**")
+            render_source_records(sources, key_prefix=f"topicsrc_{topic}", limit=6)
 
 
 def _render_selected_topic_source(topic: str) -> None:
@@ -187,7 +150,7 @@ def _render_selected_topic_source(topic: str) -> None:
     readiness = get_visualization_status(str(source_id))
     if not readiness:
         return
-    section_header("Selected source", "Safest available view for the source you opened.")
+    section_header("Selected source", "The safest available view for the source you opened.")
     render_universal_source_viewer(
         readiness,
         readiness,
@@ -195,30 +158,12 @@ def _render_selected_topic_source(topic: str) -> None:
     )
 
 
-def _render_topic_sources(topic: str) -> None:
-    """Show official STATEC sources cataloged for this topic, if any."""
-    category = _TOPIC_CATEGORY.get(topic)
-    if not category:
-        return
-    sources = get_sources_by_category(category)
-    if not sources:
-        return
-    with st.expander(f"Official sources for {topic.lower()} "
-                     f"({len(sources)} cataloged)", expanded=False):
-        st.caption(
-            "Beyond the curated charts above, these official STATEC / LUSTAT "
-            "sources cover this topic — API datasets, Excel tables and "
-            "publication annexes."
-        )
-        render_source_records(sources, key_prefix=f"topicsrc_{topic}", limit=6)
-
-
 def _render_go_deeper() -> None:
     """Point users at the comparison and chart-builder tools."""
     section_header("Go deeper")
     left, right = st.columns(2)
     with left:
-        st.page_link("pages/4_Compare.py", label="Compare sectors, groups or communes",
+        st.page_link("pages/4_Compare.py", label="Compare places, sectors or groups",
                      use_container_width=True)
     with right:
         st.page_link("pages/2_Build_a_Chart.py", label="Build your own chart",
@@ -227,9 +172,11 @@ def _render_go_deeper() -> None:
 
 def _render_more_topics(current: str) -> None:
     """Compact links to the other topic pages, so users never feel stuck."""
+    current_page = _TOPIC_PAGE.get(current)
+    others = [(label, page) for label, page in _NAV if page != current_page]
     section_header("Explore another topic")
-    others = [item for item in _NAV if item[0] != current]
-    cols = st.columns(len(others))
-    for col, (_topic, page, label, _icon) in zip(cols, others):
-        with col:
-            st.page_link(page, label=label, use_container_width=True)
+    for start in range(0, len(others), 3):
+        cols = st.columns(3)
+        for col, (label, page) in zip(cols, others[start:start + 3]):
+            with col:
+                st.page_link(page, label=label, use_container_width=True)

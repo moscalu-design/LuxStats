@@ -1,38 +1,82 @@
-"""Home page: a guided front door to Luxembourg statistics."""
+"""Home page: the front door to Luxembourg statistics.
+
+The landing page answers four questions fast — what LuxStats is, what you can
+do, where to start, and whether the data can be trusted — then gets out of the
+way. Search is the headline action; everything else is a calm second tier.
+"""
 
 from __future__ import annotations
+
+from html import escape
 
 import streamlit as st
 
 from src.concept_view import render_concept
 from src.concepts import get_concept
-from src.data.analysis_cards import commune_cards, comparison_cards, popular_cards
-from src.data.communes import list_communes
 from src.data.priority_topics import home_question_cards
 from src.search import NO_RESULTS_HINT, search_communes, search_concepts, search_source_visualizations
-from src.ui.cards import render_analysis_grid, render_metric_grid, render_question_grid
-from src.ui.catalog_views import render_coverage_section, render_source_coverage_badges
-from src.ui.page_header import render_page_header
+from src.ui.cards import render_metric_grid, render_question_grid
 from src.ui.source_visualizer import status_label
-from src.ui_components import section_header
+from src.ui.theme import section_header, trust_note
 
 # Topic -> (icon, name, one-line description, page path).
-TOPIC_CARDS = [
-    ("🏠", "Housing", "New homes, building permits, and how big homes are.",
+TOPIC_TILES: list[tuple[str, str, str, str]] = [
+    ("🏠", "Housing", "Prices, construction and the size of new homes.",
      "pages/6_Housing.py"),
-    ("💶", "Salaries", "Pay by sector, the gender pay gap, and the minimum wage.",
+    ("💶", "Salaries & income", "Pay by sector, the gender pay gap, minimum wage.",
      "pages/7_Salaries.py"),
-    ("👥", "Population", "How many people live in Luxembourg, and how that changes.",
+    ("👥", "Population", "How many people live here, and how that changes.",
      "pages/8_Population.py"),
-    ("🧰", "Labour Market", "Jobs and unemployment over time.",
+    ("🧰", "Labour market", "Jobs, employment and unemployment over time.",
      "pages/9_Labour_Market.py"),
-    ("📈", "Prices & Inflation", "The cost of living and the inflation rate.",
+    ("📈", "Prices & inflation", "Consumer prices and the cost of living.",
      "pages/10_Prices_Inflation.py"),
-    ("📍", "Commune Portal", "Choose one commune and see local statistics in one place.",
-     "pages/3_Commune_Portal.py"),
-    ("", "Tourism", "Accommodation arrivals, overnight stays, and short-term tourism indicators.",
+    ("🏦", "Economy", "GDP and short-term economic indicators.",
+     "pages/14_Economy.py"),
+    ("🧳", "Tourism", "Accommodation arrivals and overnight stays.",
      "pages/15_Tourism.py"),
 ]
+
+# Secondary tools — useful, but not the headline. (icon, name, blurb, page).
+TOOL_TILES: list[tuple[str, str, str, str]] = [
+    ("⚖️", "Compare", "Put communes, sectors or groups side by side.",
+     "pages/4_Compare.py"),
+    ("🛠️", "Build a chart", "Make your own chart without dataset codes.",
+     "pages/2_Build_a_Chart.py"),
+    ("📍", "Commune portal", "All local statistics for one commune.",
+     "pages/3_Commune_Portal.py"),
+    ("🆕", "What changed?", "Latest figures and the biggest recent moves.",
+     "pages/5_What_Changed.py"),
+]
+
+
+def _render_hero() -> None:
+    st.markdown(
+        """
+        <section class="lux-hero">
+            <h1>LuxStats</h1>
+            <p>Official Luxembourg statistics, made easier to find and compare.</p>
+        </section>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def _render_tiles(items: list[tuple[str, str, str, str]], *, columns: int) -> None:
+    """Render a compact grid of routing tiles."""
+    for start in range(0, len(items), columns):
+        cols = st.columns(columns)
+        for col, (icon, name, blurb, page) in zip(cols, items[start:start + columns]):
+            with col:
+                with st.container(border=True):
+                    st.markdown(
+                        f"<div class='lux-tile-icon'>{escape(icon)}</div>"
+                        f"<h4>{escape(name)}</h4>"
+                        f"<p>{escape(blurb)}</p>",
+                        unsafe_allow_html=True,
+                    )
+                    st.page_link(page, label=f"Open {name.lower()}",
+                                 use_container_width=True)
 
 
 def _commune_card(result: dict[str, str], key_prefix: str) -> None:
@@ -41,23 +85,12 @@ def _commune_card(result: dict[str, str], key_prefix: str) -> None:
         st.markdown(f"**{result['title']}**")
         st.caption(result["description"])
         if st.button(
-            "Open commune profile →",
+            "Open commune profile",
             key=f"{key_prefix}_{result['commune']}_{result['tab']}",
             use_container_width=True,
         ):
             st.session_state["selected_commune"] = result["commune"]
             st.switch_page("pages/3_Commune_Portal.py")
-
-
-def _render_topic_grid() -> None:
-    for row_start in range(0, len(TOPIC_CARDS), 3):
-        cols = st.columns(3)
-        for col, (icon, name, blurb, page) in zip(cols, TOPIC_CARDS[row_start:row_start + 3]):
-            with col:
-                with st.container(border=True):
-                    st.markdown(f"**{name}**")
-                    st.caption(blurb)
-                    st.page_link(page, label=f"Explore {name}", use_container_width=True)
 
 
 def _status_badge_class(status: str) -> str:
@@ -73,30 +106,37 @@ def _render_search_results(query: str) -> None:
     total = len(results) + len(commune_results) + len(source_hits)
     section_header(
         f"Results for “{query.strip()}”",
-        f"{total} matching result(s)" if total else "",
+        f"{total} matching result(s)" if total else "Nothing matched that search.",
     )
     if not results and not commune_results and not source_hits:
         st.info(NO_RESULTS_HINT)
         return
-    if commune_results:
+
+    if results or commune_results:
         for result in commune_results:
             _commune_card(result, key_prefix="commune_search")
-    if results:
-        render_metric_grid(results, key_prefix="search", columns=2)
+        if results:
+            render_metric_grid(results, key_prefix="search", columns=2)
+
     if source_hits:
-        section_header("Source-backed matches")
+        section_header(
+            "Official sources",
+            "Chart-ready and preview-ready sources rank ahead of records still being mapped.",
+        )
         grouped = [
-            ("Chart-ready concepts", {"chart_ready"}),
-            ("Preview-ready sources", {"preview_ready"}),
-            ("Downloadable-only sources", {"downloadable_only"}),
-            ("Unresolved official sources", set()),
+            ("Ready to chart", {"chart_ready"}),
+            ("Ready to preview", {"preview_ready"}),
+            ("Download only", {"downloadable_only"}),
+            ("Needs mapping or review", set()),
         ]
         shown: set[str] = set()
         for label, statuses in grouped:
             rows = [
                 row for row in source_hits[:5]
                 if row["source_id"] not in shown
-                and (row["visualization_status"] in statuses if statuses else row["visualization_status"] not in {"chart_ready", "preview_ready", "downloadable_only"})
+                and (row["visualization_status"] in statuses if statuses
+                     else row["visualization_status"] not in
+                     {"chart_ready", "preview_ready", "downloadable_only"})
             ]
             if not rows:
                 continue
@@ -106,45 +146,30 @@ def _render_search_results(query: str) -> None:
                 with st.container(border=True):
                     badge_class = _status_badge_class(row["visualization_status"])
                     st.markdown(
-                        f"<span class='lux-tag'>{row['category']}</span> "
-                        f"<span class='lux-tag {badge_class}'>{status_label(row['visualization_status'])}</span>",
+                        f"<span class='lux-tag'>{row['category']}</span>"
+                        f"<span class='lux-tag {badge_class}'>"
+                        f"{status_label(row['visualization_status'])}</span>",
                         unsafe_allow_html=True,
                     )
                     st.markdown(f"**{row['title']}**")
                     st.caption(row["reason"])
                     if row["visualization_status"] == "chart_ready" and row.get("mapped_metric_id"):
-                        if st.button("Open chart", key=f"home_src_{row['source_id']}", use_container_width=True):
+                        if st.button("Open chart", key=f"home_src_{row['source_id']}",
+                                     use_container_width=True):
                             st.session_state["open_concept"] = row["mapped_metric_id"]
                             st.rerun()
                     else:
-                        st.page_link("pages/13_Source_Library.py", label=row["recommended_action"], use_container_width=True)
-
-
-def _render_question_cards() -> None:
-    cards = home_question_cards(limit=8)
-    render_question_grid(cards, key_prefix="home_question", columns=4)
-
-
-def _render_commune_quick_search() -> None:
-    with st.container(border=True):
-        st.markdown("#### Look up your commune")
-        commune = st.selectbox(
-            "Choose a commune",
-            list_communes(),
-            index=list_communes().index("Hesperange"),
-            label_visibility="collapsed",
-        )
-        if st.button("Open commune profile", use_container_width=True):
-            st.session_state["selected_commune"] = commune
-            st.switch_page("pages/3_Commune_Portal.py")
+                        st.page_link("pages/13_Source_Library.py",
+                                     label=row["recommended_action"],
+                                     use_container_width=True)
 
 
 def render_home() -> None:
-    render_page_header("home", eyebrow="Official STATEC / LUSTAT data")
+    _render_hero()
 
     query = st.text_input(
         "Search Luxembourg statistics",
-        placeholder="Search housing prices, salaries, population, inflation…",
+        placeholder="Try “housing prices”, “median salary”, “inflation”, “Hesperange”…",
         key="home_search",
         label_visibility="collapsed",
     )
@@ -165,66 +190,27 @@ def render_home() -> None:
         _render_search_results(query)
         return
 
-    st.markdown(
-        """
-        <div class="lux-howto">
-            <div class="lux-howto-step"><strong>Search a topic</strong><span>Use everyday words like salary, housing, population or inflation.</span></div>
-            <div class="lux-howto-step"><strong>Open a question</strong><span>Start from a curated public-interest card when you are not sure what to search.</span></div>
-            <div class="lux-howto-step"><strong>View official data</strong><span>Chart-ready concepts use confirmed mappings only.</span></div>
-            <div class="lux-howto-step"><strong>Inspect sources</strong><span>Open source links and readiness details when you need the record behind a chart.</span></div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    # ---- Start with a question ------------------------------------------
+    section_header(
+        "Start with a question",
+        "Common questions people ask of Luxembourg statistics.",
     )
+    render_question_grid(home_question_cards(limit=6), key_prefix="home_question",
+                         columns=3)
 
-    section_header("Start with a question",
-                   "Source-backed entry points for the statistics people ask for most.")
-    _render_question_cards()
+    # ---- Explore by topic -----------------------------------------------
+    section_header("Explore by topic", "Seven areas, each with charts and official sources.")
+    _render_tiles(TOPIC_TILES, columns=4)
 
-    section_header("Popular statistics",
-                   "Chart-ready answers backed by confirmed official datasets.")
-    render_analysis_grid(popular_cards(), key_prefix="popular", columns=3)
+    # ---- Tools for deeper analysis --------------------------------------
+    section_header("Tools for deeper analysis",
+                   "When search and topics are not enough.")
+    _render_tiles(TOOL_TILES, columns=4)
 
-    section_header("Common comparisons",
-                   "Put places, sectors or trends side by side.")
-    render_analysis_grid(comparison_cards(), key_prefix="compare", columns=3)
-
-    section_header("Browse by topic", "Pick an area and jump straight to curated charts.")
-    _render_topic_grid()
-
-    section_header("Explore by commune",
-                   "Local statistics for any of Luxembourg's 100 communes.")
-    left, right = st.columns([1, 2])
-    with left:
-        _render_commune_quick_search()
-    with right:
-        render_analysis_grid(commune_cards(), key_prefix="commune", columns=2)
-
-    with st.container(border=True):
-        st.markdown("#### What changed recently?")
-        st.caption(
-            "See the latest official figures and the biggest recent moves in "
-            "housing, salaries, population, jobs and prices."
-        )
-        st.page_link("pages/5_What_Changed.py", label="Open What Changed?")
-
-    section_header("Data coverage",
-                   "Every official STATEC source the portal has cataloged.")
-    render_coverage_section()
-    render_source_coverage_badges(label="Product readiness")
-
-    with st.container(border=True):
-        st.markdown("#### Visualize or inspect any source")
-        st.caption(
-            "Every cataloged source now has a safe next step: open a chart, preview a table, "
-            "download the official file, or see the mapping work needed."
-        )
-        st.page_link("pages/13_Source_Library.py", label="Open the Source Library readiness view")
-
-    with st.container(border=True):
-        st.markdown("#### For advanced users")
-        st.caption(
-            "Want the raw data? The Dataset Explorer lets you search all "
-            "official STATEC / LUSTAT datasets, inspect dimensions, and export CSVs."
-        )
-        st.page_link("pages/11_Dataset_Explorer.py", label="Open the Dataset Explorer")
+    # ---- Trust ----------------------------------------------------------
+    st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)
+    trust_note(
+        "Every chart is built from official STATEC / LUSTAT data, with the source "
+        "and a CSV download one click away. LuxStats is deterministic: there is no "
+        "chatbot and no AI-generated answers — just the official figures."
+    )

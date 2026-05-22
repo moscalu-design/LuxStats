@@ -1,127 +1,209 @@
-# LuxStats
+# LuxStats — Current Situation
 
-LuxStats is a Streamlit portal that turns official Luxembourg statistics from
-STATEC / LUSTAT into a **guided statistics product** — not just a prettier
-dataset browser. Official LUSTAT data is powerful but dataset-first and
-code-heavy. LuxStats answers human questions through clear UI flows instead:
-*"What are housing prices doing?"*, *"How does my commune compare?"*,
-*"What changed recently?"*
+> This README is written as a copy/paste briefing for an LLM or new contributor.
+> It describes **what the application is right now**, how it is built, what works,
+> what is deployed, and what is still open. Snapshot date: **2026-05-22**.
 
-It is fully deterministic. **There is no LLM, chatbot, or AI answer box.**
-Everything is driven by official data, curated metadata, reusable charts, and
-static plain-language templates.
+---
 
-Legacy model-backed planner code has been removed from the runtime. Advanced
-exploration uses explicit filters, grouping controls, generated SQL, and
-validated DuckDB execution.
+## 1. What LuxStats is
 
-## What the app does
+LuxStats is a **Streamlit portal** that turns official Luxembourg statistics from
+**STATEC / LUSTAT** into a guided statistics product — not a dataset browser.
+Official LUSTAT data is powerful but dataset-first and code-heavy. LuxStats
+answers human questions through clear UI flows instead: *"What are housing
+prices doing?"*, *"How does my commune compare?"*, *"What changed recently?"*
 
-- **Find a Statistic** — search in plain language ("housing prices", "median
-  salary", "population Hesperange") and get friendly metric cards.
-- **Build a Chart** — pick a topic, metric, items and chart type in a few
-  clicks; no dataset codes required.
-- **Compare** — put communes head to head, or compare sectors and groups
-  within one statistic.
-- **What Changed?** — the latest available figures and the biggest recent
-  moves, all calculated from real cached data.
-- **Commune Portal** — choose one of Luxembourg's 100 communes and see every
+**It is fully deterministic. There is no LLM, chatbot, or AI answer box at
+runtime.** Everything is driven by official data, a curated metric catalog,
+reusable Plotly charts, and static plain-language templates. Legacy
+model-backed planner code has been removed from the runtime. (Note: the
+`.env.example` file still mentions an `ANTHROPIC_API_KEY` for that old planner —
+it is **stale**; the app requires no secrets and ignores it.)
+
+This no-LLM-runtime rule is a hard product constraint. Do not add an LLM,
+chatbot, GPT integration, AI answer box, model-backed planner, or generated
+statistical claim to the runtime.
+
+---
+
+## 2. Current status
+
+| Area | State |
+| --- | --- |
+| Code | Compiles cleanly (`compileall` on `app.py pages src tests scripts`). |
+| Tests | **135 passed, 1 skipped** via `pytest`. |
+| Git | Branch `main`, clean working tree, latest commit `a701e00`. |
+| Remote | `github.com/moscalu-design/LuxStats`. |
+| Deployment | Targets **Streamlit Community Cloud** (see §8). Repo is deploy-ready: `app.py` at root, `requirements.txt`, `.streamlit/config.toml` present. No secrets required. |
+| Python | Local venv is 3.9; code targets 3.9+ and runs on Streamlit Cloud's default runtime. |
+
+---
+
+## 3. What the app does (user-facing)
+
+- **Find a Statistic** — plain-language search ("housing prices", "median
+  salary", "population Hesperange") returning friendly metric cards.
+- **Build a Chart** — pick topic, metric, items and chart type in a few clicks;
+  no dataset codes required.
+- **Compare** — communes head to head, or sectors/groups within one statistic.
+- **What Changed?** — latest available figures and biggest recent moves,
+  computed from real cached data.
+- **Commune Portal** — pick one of Luxembourg's 100 communes and see every
   connected commune-level statistic in one profile, including a map view.
-- **Topic dashboards** — Housing, Salaries, Population, Labour Market, Prices
-  & Inflation, Economy, and Tourism. Topics with confirmed charts show charts first;
-  topics still being mapped show source coverage without pretending charts exist.
-- **Source Library** — the advanced inventory of 1,396 official API datasets,
-  Excel files and publication files, with priority, mapping status and
-  visualization readiness.
-- **Dataset Explorer** — the advanced page for power users to search every
-  official LUSTAT API dataset and export raw CSVs.
+- **Topic dashboards** — Housing, Salaries, Population, Labour Market, Prices &
+  Inflation, Economy, Tourism. Topics with confirmed charts show charts first;
+  topics still being mapped show source coverage without faking charts.
+- **Source Library** — advanced inventory of all 1,396 official sources, with
+  priority, mapping status and visualization readiness.
+- **Dataset Explorer** — advanced page to search every LUSTAT API dataset and
+  export raw CSVs.
 
-Every chart shows a plain-language explanation, a source/freshness badge, and
-a CSV download. Raw STATEC / LUSTAT codes stay inside "Advanced details"
+Every chart shows a plain-language explanation, a source/freshness badge, and a
+CSV download. Raw STATEC / LUSTAT codes stay inside "Advanced details"
 expanders, hidden by default.
 
-## Main user features
+---
 
-| Feature | Where |
-| --- | --- |
-| Metric Finder (friendly search) | Home, `pages/1_Find_a_Statistic.py` |
-| Guided analysis cards | Home (`src/data/analysis_cards.py`) |
-| Comparison mode | `pages/4_Compare.py` (`src/analysis/comparison.py`) |
-| Build a Chart tool | `pages/2_Build_a_Chart.py` (`src/ui/chart_builder.py`) |
-| What Changed page | `pages/5_What_Changed.py` (`src/analysis/changes.py`) |
-| Commune Portal + map | `pages/3_Commune_Portal.py` |
-| Plain-language explanations | `src/ui/explanations.py` |
-| Source / freshness badges | `src/ui/source_badges.py` |
-| Time parsing and chart period controls | `src/data/time_utils.py`, `src/ui/time_controls.py` |
-| Source mapping status | `src/data/source_mapping.py` |
-| Source visualization readiness | `src/data/source_visualization.py`, `src/ui/source_visualizer.py` |
-| Public-interest priority questions | `src/data/priority_topics.py` |
-
-## Navigation structure
+## 4. Navigation
 
 The Streamlit sidebar is intentionally compact and product-led:
 
-- **Main** — Home, Find a Statistic, Compare, Build a Chart, and What Changed?
-- **Topics** — Housing, Salaries & Income, Population, Labour Market, Prices & Inflation, Economy, and Tourism.
-- **Data & Sources** — Dataset Explorer and Source Library, both treated as advanced inspection areas.
+- **Main** — Home, Find a Statistic, Compare, Build a Chart, What Changed?
+- **Topics** — Housing, Salaries & Income, Population, Labour Market, Prices &
+  Inflation, Economy, Tourism.
+- **Data & Sources** — Dataset Explorer and Source Library (advanced
+  inspection areas).
 - **About / Help** — About Data.
 
-The Commune Portal remains available from Home, search results, source actions, and commune-focused cards, but it is not a top-level sidebar item. Source-heavy tables and raw records should stay behind expanders so the normal journey starts with search, curated questions, and chart-ready concepts.
+The Commune Portal is reachable from Home, search results, source actions, and
+commune-focused cards, but it is not a top-level sidebar item.
 
-## Project structure
+### Pages (`pages/`)
 
-- `app.py` — Streamlit entry page (the product home).
-- `pages/` — Streamlit multipage app, ordered for a product-led navigation.
-- `src/concepts.py` — the **curated metric catalog**: each `Concept` maps an
-  everyday question to a confirmed LUSTAT dataset plus chart configuration.
-- `src/concept_view.py` — turns one concept into a finished chart block.
-- `src/topic_page.py` — renders a topic dashboard from its concepts.
-- `src/home.py` — home page sections: search, analysis cards, topic cards.
-- `src/search.py` — synonym-aware search mapping plain words to concepts.
-- `src/data/analysis_cards.py` — curated guided-analysis journey cards.
-- `src/data/priority_topics.py` — public-interest priority topics and
-  source-backed question cards.
-- `src/data/source_mapping.py` — derived mapping status for source records.
-- `src/data/source_visualization.py` — safe readiness state for every official
-  source: chart, preview, download, mapping, inspection, manual review or low priority.
-- `src/data/time_utils.py` — annual/quarterly/monthly/date period parsing.
-- `src/data/communes.py` — canonical commune names and cautious alias matching.
-- `src/data/commune_portal.py` — defensive commune profile builder.
-- `src/data/geography.py` — geospatial hook for commune boundary GeoJSON.
-- `src/analysis/comparison.py` — metric and commune comparison engine.
-- `src/analysis/changes.py` — recent-change detection.
-- `src/ui/cards.py` — friendly metric and analysis cards.
-- `src/ui/explanations.py` — template-based plain-language explanations.
-- `src/ui/source_badges.py` — source and data-freshness badges.
-- `src/ui/chart_builder.py` — the guided "Build a Chart" flow.
-- `src/ui/time_controls.py` — reusable chart period controls.
-- `src/ui/navigation.py`, `src/ui/page_header.py` — centralized navigation and
-  page headers.
-- `src/ui/source_visualizer.py` — universal source viewer used by Source Library.
-- `src/ui/maps.py` — commune map view (honest empty state until boundaries
-  are connected).
-- `src/ui/commune_components.py` — Commune Portal cards, charts, tables.
-- `src/charts.py` / `src/formatting.py` — reusable Plotly charts and value
-  formatting (euros, %, counts).
-- `src/statec_client.py` / `src/cache.py` / `src/data_access.py` — LUSTAT
-  SDMX client, DuckDB + CSV cache, and the high-level `get_dataset(id)`.
-- `src/catalog.py` — advanced dataset catalog (includes `TODO_CONFIRM_*`
+`1_Find_a_Statistic`, `2_Build_a_Chart`, `3_Commune_Portal`, `4_Compare`,
+`5_What_Changed`, `6_Housing`, `7_Salaries`, `8_Population`, `9_Labour_Market`,
+`10_Prices_Inflation`, `11_Dataset_Explorer`, `12_About_Data`,
+`13_Source_Library`, `14_Economy`, `15_Tourism`.
+
+---
+
+## 5. Data model & current numbers
+
+### Curated layer (the product front door)
+
+- **`src/concepts.py`** — the curated metric catalog: **25 `Concept` entries**.
+  Each `Concept` maps an everyday question to a confirmed LUSTAT dataset plus
+  chart configuration (chart type, value format, explanation, series).
+- Concepts span **7 topics**: Housing, Salaries, Population, Labour Market,
+  Prices & Inflation, Economy, Tourism.
+- `src/concept_view.py` renders one concept into a finished chart block;
+  `src/topic_page.py` renders a topic dashboard from its concepts.
+
+### Source catalog (the discovery layer)
+
+The unified source catalog (`data/catalog/unified_source_catalog.json`) holds
+**1,396 official sources**, committed so the deployed app has data without
+crawling. By source type:
+
+| Source type | Count | What it is |
+| --- | --- | --- |
+| `LUSTAT_API` | 904 | Dataflows in the LUSTAT SDMX API. |
+| `PUBLICATION_PDF` | 451 | PDF reports from STATEC publication series. |
+| `STATEC_EXCEL` | 38 | Excel/CSV tables from STATEC "other formats" pages. |
+| `PUBLICATION_EXCEL` | 3 | Excel annexes attached to STATEC publications. |
+
+### Visualization readiness index
+
+`data/catalog/source_visualization_index.json` classifies every source into the
+safest available UX. Current breakdown of all 1,396 sources:
+
+| `visualization_status` | Count | Meaning |
+| --- | --- | --- |
+| `chart_ready` | 28 | Confirmed chart/profile route exists. |
+| `needs_column_mapping` | 600 | API data exists; columns/filters need confirmation. |
+| `needs_manual_review` | 451 | Usually PDF/publication material needing human review. |
+| `ignored_low_priority` | 282 | Official but not a current public priority. |
+| `needs_excel_inspection` | 35 | Excel/CSV source should be downloaded and inspected. |
+
+(`preview_ready`, `downloadable_only` and `not_chartable` are also valid states
+but have no current members.)
+
+Mapping status (`src/data/source_mapping.py`) is a parallel classification:
+`mapped_to_metric`, `mapped_to_commune_portal`, `unmapped`,
+`needs_manual_review`, `ignored_low_priority`.
+
+**The app only ever loads cached catalog JSON from `data/catalog/`** — crawling
+never happens at page load.
+
+---
+
+## 6. Architecture
+
+```
+app.py                  Streamlit entry page → src/home.render_home()
+pages/                   15 Streamlit pages (product-led order)
+.streamlit/config.toml   Theme + headless server config
+data/catalog/*.json      Committed source catalogs loaded at runtime
+data/cache/              Local DuckDB + CSV cache (per-environment, not committed)
+```
+
+### `src/` modules
+
+**Curated charts**
+- `concepts.py` — curated chart-ready metric catalog (25 Concepts).
+- `concept_view.py` — renders one concept into a chart block.
+- `topic_page.py` — renders a topic dashboard from concepts.
+- `home.py` — home sections: search, analysis cards, topic cards.
+- `search.py` — synonym-aware plain-language search → concepts.
+- `charts.py` / `formatting.py` — reusable Plotly charts & value formatting.
+
+**Data access**
+- `statec_client.py` — LUSTAT SDMX client.
+- `cache.py` — DuckDB + CSV cache.
+- `data_access.py` — high-level `get_dataset(id)`; routes `STATEC_XLS_*` ids to
+  Excel parsers.
+- `catalog.py` — advanced dataset catalog (includes `TODO_CONFIRM_*`
   placeholders) powering the Dataset Explorer.
-- `src/data/categorization.py` — transparent keyword rules for categorizing
-  any source into one of 20 themes and inferring its geographic level.
-- `src/data/statec_api_catalog.py`, `statec_other_formats_catalog.py`,
-  `statec_publication_catalog.py` — builders for the three source catalogs.
-- `src/data/source_catalog.py` — the unified, searchable source catalog with
-  priority scoring.
-- `src/data/file_ingestion.py` — download and inspect Excel/CSV source files.
-- `src/data/statec_web.py` — polite, domain-restricted page fetching.
-- `src/ui/catalog_views.py` — catalog views embedded in product pages.
-- `src/reports/source_catalog_report.py` — Markdown catalog report generator.
-- `data/catalog/*.json` — committed source catalogs the app loads at runtime.
-- `scripts/refresh_source_catalog.py`, `scripts/generate_source_report.py` —
-  catalog maintenance (the only place crawling happens).
 
-## Run locally
+**Source catalog & readiness** (`src/data/`)
+- `source_catalog.py` — unified searchable catalog + priority scoring.
+- `statec_api_catalog.py`, `statec_other_formats_catalog.py`,
+  `statec_publication_catalog.py` — builders for the three source catalogs.
+- `source_mapping.py` — derived mapping status.
+- `source_visualization.py` — readiness state for every source.
+- `categorization.py` — transparent keyword rules: 20 themes + geo level.
+- `file_ingestion.py` — download/inspect Excel/CSV files.
+- `statec_web.py` — polite, domain-restricted page fetching.
+- `excel_sources.py` — parses STATEC publication Excel workbooks.
+- `analysis_cards.py` — curated guided-analysis journey cards.
+- `priority_topics.py` — public-interest priority topics & question cards.
+- `time_utils.py` — annual/quarterly/monthly/date period parsing.
+- `communes.py` — canonical commune names + cautious alias matching.
+- `commune_portal.py` — defensive commune profile builder.
+- `geography.py` — geospatial hook for commune boundary GeoJSON.
+
+**Analysis** (`src/analysis/`)
+- `comparison.py` — metric and commune comparison engine.
+- `changes.py` — recent-change detection.
+
+**UI** (`src/ui/`)
+- `cards.py`, `explanations.py`, `source_badges.py`, `chart_builder.py`,
+  `time_controls.py`, `navigation.py`, `page_header.py`, `source_visualizer.py`,
+  `maps.py`, `commune_components.py`, `catalog_views.py`.
+
+**Reports** (`src/reports/`)
+- `source_catalog_report.py` — Markdown catalog report generator.
+
+### Scripts (`scripts/`)
+- `refresh_source_catalog.py` — the only place network crawling happens.
+- `generate_source_report.py` — writes the catalog breakdown report.
+- `build_source_visualization_index.py` — rebuilds the readiness index.
+- `test_app.sh` — compile check + pytest + import check + optional Playwright.
+
+---
+
+## 7. Run locally
 
 ```bash
 python -m venv .venv
@@ -130,315 +212,130 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-## Run the tests
+Dependencies (`requirements.txt`): `streamlit`, `duckdb`, `pandas`, `requests`,
+`plotly`, `xlrd`, `openpyxl`, `python-dotenv`, `pytest`. No API keys needed.
+
+### Validate
 
 ```bash
-python -m compileall app.py pages src tests
-pytest
+python3 -m compileall app.py pages src tests scripts
+.venv/bin/python -m pytest
 ./scripts/test_app.sh
 ```
 
-`scripts/test_app.sh` runs the compile check, pytest, a core Streamlit import
-check, and optional Playwright browser tests when installed.
+---
 
-## How to add a new metric
+## 8. Deployment
 
-Add a `Concept` to `src/concepts.py`:
+The app deploys to **Streamlit Community Cloud** with no code changes.
 
-1. Confirm the official LUSTAT dataflow ID against the live SDMX API or the
-   Dataset Explorer. Only confirmed IDs belong in `concepts.py`.
-2. Add a `Concept(...)`: friendly `title`, plain `description`, matching
-   `topic`, everyday `keywords`, the `dataset_id`, a `chart` type (`line`,
-   `ranked_bar`), a `value_format`, an `explanation`, and `geographic_level`.
-3. Set `series_dim`, `default_series`, `series_labels`, `filters` so the chart
-   shows the right, readable slice. A `series_dim` also makes the metric
-   available in Compare and Build a Chart.
-4. Set `popular=True` to surface it on the home page and What Changed.
+1. Go to **share.streamlit.io**, sign in with a GitHub account with access to
+   `moscalu-design/LuxStats`.
+2. **Create app → Deploy a public app from GitHub**.
+3. Repository `moscalu-design/LuxStats`, branch `main`, main file `app.py`.
+4. **Secrets:** leave empty — none required.
+5. Deploy. Every push to `main` then auto-redeploys.
 
-The topic page, Metric Finder, chart builder and comparison engine all pick
-the concept up automatically.
+Cached data (`data/cache/`) is local to the running environment; use the in-app
+refresh buttons (Dataset Explorer) to update it. The committed
+`data/catalog/*.json` files mean the deployed app has source data immediately.
 
-## How to add a new dataset
+---
 
-Unconfirmed candidate datasets stay in `src/catalog.py` as `CatalogEntry`
-rows with `TODO_CONFIRM_*` IDs and `status="needs_confirmation"`; they power
-only the advanced Dataset Explorer. Once an ID is confirmed, either promote it
-to a `Concept` (for curated charts) or set `status="confirmed"` with a real
-`dataset_id`. Never invent dataset IDs.
+## 9. Known limitations / open work
 
-### STATEC publication Excel files
+- **Commune boundary GeoJSON is not bundled.** Map views show an honest empty
+  state until `data/geography/communes.geojson` (with a `name` property per
+  feature) is added. Official LAU boundaries are on the Luxembourg geoportal /
+  data.public.lu.
+- **Several catalog datasets still lack confirmed LUSTAT IDs** — rents,
+  education, mobility, public finance, economy keep `TODO_CONFIRM_*`
+  placeholders in `src/catalog.py` and are not charted.
+- **Housing sale prices are national only.** The D4011 house price index and
+  average apartment prices are connected via `src/data/excel_sources.py`, but
+  STATEC publishes them at national level. **Commune-level sale prices and
+  rents are still not connected.**
+- The housing commune metric `DSD_CENSUS_NB_LOG_CLA@DF_B1707` is a census
+  **dwelling count**, not a price estimate.
+- Housing-price quarterly figures are averaged to yearly for curated charts;
+  full quarterly detail is in each chart's advanced view.
+- **Source categorization is heuristic.** ~25% of LUSTAT dataflows have terse
+  titles and land in "Other / Unknown". Improve rules in
+  `src/data/categorization.py` rather than hand-editing the catalog.
+- "Recently updated" timestamps reflect when a dataset was last cached on the
+  running deployment, not an official STATEC publication date.
+- The publication crawler covers a fixed set of series; add slugs to
+  `PUBLICATION_SERIES` in `src/data/statec_publication_catalog.py`.
 
-Some headline statistics — notably housing **sale prices** — are published by
-STATEC as Excel workbooks rather than through the LUSTAT SDMX API.
-`src/data/excel_sources.py` downloads and parses these into the same tidy
-`TIME_PERIOD / OBS_VALUE / SPECIFICATION` shape, and `get_dataset()` routes any
-dataset id prefixed `STATEC_XLS_` to it. A `Concept` then charts it like any
-other. Currently wired: the D4011 house price index and average apartment
-prices (publication *Logement en chiffres*).
+### Next recommended ingestion priorities
 
-## How to add commune-level support
+See `reports/source_mapping_priorities.md`. Highest-value unmapped items:
+housing permits by canton, population census breakdowns by commune, fertility,
+and short-term economy indicators.
 
-Add a confirmed commune-level `CatalogEntry` in `src/catalog.py`:
+### Confirmed commune-level LUSTAT tables (wired into the Commune Portal)
 
-```python
-CatalogEntry(
-    dataset_id="CONFIRMED_LUSTAT_ID",
-    theme="Population",
-    title="Population by commune",
-    friendly_title="Population by commune",
-    description="Residents by commune and year.",
-    geographic_level="commune",
-    geography_column="COMMUNE_LABEL",
-    commune_code_column="COMMUNE",
-    commune_name_column="COMMUNE_LABEL",
-    value_column="OBS_VALUE",
-    time_column="TIME_PERIOD",
-    commune_portal=True,
-    status="confirmed",
-)
-```
+- `DF_X021` — Population by canton and municipality.
+- `DF_X020` — Population density by canton and municipality on 1 January.
+- `DF_C1600` — Monthly salaries by municipality (Median).
+- `DF_X026` — Employment/unemployment by canton and municipality.
+- `DSD_CENSUS_NB_LOG_CLA@DF_B1707` — Census dwellings by commune.
+- `DSD_CENSUS_MENAGE_PV@DF_B1703` — Census private households by commune.
 
-`commune_portal=True` datasets appear in the Commune Portal, the commune
-comparison mode, and the fastest-changing-communes ranking automatically.
+---
 
-## How to add a new analysis card
+## 10. Extending the app
 
-Add an `AnalysisCard` to `src/data/analysis_cards.py`. Each card needs a
-`title`, plain `blurb`, `topic`, `difficulty`, `icon`, a `section`
-(`popular` / `comparison` / `commune` / `changes`), and **either** a
-`concept_id` (opens that chart inline) **or** a `page` path (routes there).
-`card_validation_issues()` and the tests check that every card resolves.
+- **New metric** → add a `Concept` to `src/concepts.py` (confirmed LUSTAT
+  dataflow ID, friendly title, topic, keywords, chart type, value format,
+  explanation, `series_dim`/`filters`). Set `popular=True` to surface it on
+  Home and What Changed. Topic page, Metric Finder, chart builder and Compare
+  pick it up automatically.
+- **New candidate dataset** → add a `CatalogEntry` to `src/catalog.py` with a
+  `TODO_CONFIRM_*` id and `status="needs_confirmation"`. Never invent dataset
+  IDs. Promote to a `Concept` once confirmed.
+- **STATEC publication Excel** → add a parser in `src/data/excel_sources.py`;
+  `get_dataset()` routes `STATEC_XLS_*` ids to it.
+- **Commune-level dataset** → add a confirmed `CatalogEntry` with
+  `commune_portal=True` and the commune/value/time columns set.
+- **Analysis card** → add an `AnalysisCard` to `src/data/analysis_cards.py`
+  (title, blurb, topic, difficulty, icon, section, and either `concept_id` or
+  `page`). `card_validation_issues()` and tests verify every card resolves.
 
-## How the 1,400-source library fits the product
+Rules: only chart confirmed mappings; never fake data or invent insights; keep
+raw codes/tables behind Advanced expanders; preserve the no-LLM-runtime rule;
+run validation before summarizing.
 
-The Source Library is not the front door for normal users. It powers:
+---
 
-- Home-page question cards and source coverage badges.
-- Metric Finder fallback results when no curated chart exists.
-- Topic-page source coverage and unmapped source lists.
-- Commune Portal source coverage and unmapped local-source suggestions.
-- What Changed watch lists and publication-annex previews.
-- Source-mapping priority reports.
-
-Mapping status is derived in `src/data/source_mapping.py`:
-
-| Status | Meaning |
-| --- | --- |
-| `mapped_to_metric` | A source powers a chart-ready `Concept`. |
-| `mapped_to_commune_portal` | A source powers a Commune Portal metric. |
-| `unmapped` | Useful source, not yet wired into a chart/profile. |
-| `needs_manual_review` | Usually publication/PDF material requiring human review. |
-| `ignored_low_priority` | Cataloged but not a current product priority. |
-
-The Source Library page can filter by mapping status. Keep raw source work
-there; keep public pages focused on chart-ready metrics and clear questions.
-
-## Source Visualization Index
-
-The visualization index classifies every official source into the safest
-available user experience:
-
-| Status | Meaning |
-| --- | --- |
-| `chart_ready` | Confirmed chart/profile route exists. |
-| `preview_ready` | Cached table can be previewed before mapping. |
-| `downloadable_only` | Official file exists but is not table-previewable. |
-| `needs_column_mapping` | API data exists but columns/filters need confirmation. |
-| `needs_excel_inspection` | Excel/CSV source should be downloaded and inspected. |
-| `needs_manual_review` | Usually PDF/publication material needing human review. |
-| `not_chartable` | No safe chart/preview path is known. |
-| `ignored_low_priority` | Official but not a current public-priority source. |
-
-Build or refresh it with:
+## 11. Refreshing data & reports
 
 ```bash
-python scripts/build_source_visualization_index.py
-```
-
-This writes `data/catalog/source_visualization_index.json` and
-`reports/source_visualization_index.md`. It does not fetch every dataset or
-invent charts.
-
-## How time controls work
-
-`src/data/time_utils.py` parses common STATEC/LUSTAT periods such as `2024`,
-`2024-Q1`, `2024Q1`, `2024-T1`, `2024-M01`, `2024-01`, `Jan 2024`, and normal
-dates. `src/ui/time_controls.py` turns that into reusable Streamlit controls
-for curated charts, Build a Chart, Compare, and Commune Portal trends.
-
-When adding a new chart, prefer:
-
-1. Normalize the time column with `normalize_period_column`.
-2. Render controls with `render_time_controls`.
-3. Filter with `apply_time_filter`.
-4. Show a friendly empty state if the selected range has no rows.
-
-## How to refresh data
-
-- Dataflow list: refresh button in the Dataset Explorer.
-- Dataset contents: open a dataset in the Dataset Explorer and fetch/refresh.
-- Cache location: `data/cache/lustat.duckdb` plus CSVs in `data/cache/csv/`.
-
-## STATEC Source Catalog
-
-Official Luxembourg statistics are scattered across three kinds of source.
-The portal catalogs all of them into one searchable **unified source
-catalog**, so users can find statistics without knowing where they live:
-
-| Source type | What it is |
-| --- | --- |
-| `LUSTAT_API` | A dataflow in the LUSTAT SDMX API (machine-readable). |
-| `STATEC_EXCEL` | An Excel/CSV table from STATEC's "data — other formats" pages. |
-| `PUBLICATION_EXCEL` | An Excel annex attached to a STATEC publication. |
-| `PUBLICATION_PDF` | A PDF report from a STATEC publication series. |
-| `OTHER_FORMAT` | Any other downloadable file (zip, …). |
-
-Every source is auto-categorized into 20 themes (Housing, Population,
-Salaries / Income, …) by the transparent keyword rules in
-`src/data/categorization.py`, given a geographic level, and scored for
-ingestion priority (`high` / `medium` / `low`).
-
-**The app only ever loads cached catalog JSON** from `data/catalog/` —
-crawling never runs at page load. The catalog files are committed so the
-deployed app has data. Browse everything on the **Source Library** page.
-
-Modules: `src/data/statec_api_catalog.py` (LUSTAT API),
-`statec_other_formats_catalog.py` (STATEC Excel tables),
-`statec_publication_catalog.py` (publication annexes),
-`source_catalog.py` (unified catalog + search + priority),
-`file_ingestion.py` (download/inspect Excel files),
-`statec_web.py` (polite, domain-restricted fetching).
-
-### How to refresh the source catalog
-
-```bash
-python scripts/refresh_source_catalog.py          # uses page caches
+python scripts/refresh_source_catalog.py          # rebuild data/catalog/*.json (uses page caches)
 python scripts/refresh_source_catalog.py --force  # re-download everything
+python scripts/build_source_visualization_index.py # rebuild the readiness index
+python scripts/generate_source_report.py           # rebuild the catalog report
 ```
 
-This fetches the LUSTAT dataflow list and a small fixed set of official
-STATEC pages (only `statistiques.public.lu`, `data.public.lu`,
-`lustat.statec.lu`), rebuilds `data/catalog/*.json`, and is the only place
-network crawling happens. Commit the updated `data/catalog/` files.
+`refresh_source_catalog.py` is the only place network crawling happens; it only
+touches `statistiques.public.lu`, `data.public.lu`, `lustat.statec.lu`. Commit
+updated `data/catalog/` files afterward.
 
-### How to generate the source report
+Reports in `reports/`: `statec_source_catalog_report.md`,
+`production_readiness_review.md`, `screen_by_screen_ux_audit.md`,
+`source_visualization_index.md`, `source_mapping_priorities.md`.
 
-```bash
-python scripts/generate_source_report.py
-```
+---
 
-Writes `reports/statec_source_catalog_report.md` — a breakdown of every
-cataloged source by category, type, geographic level and priority, plus
-recommended next sources to connect. Generated entirely from catalog data.
+## 12. Working with an LLM / coding agent
 
-Additional product-readiness reports:
-
-- `reports/production_readiness_review.md`
-- `reports/screen_by_screen_ux_audit.md`
-- `reports/source_visualization_index.md`
-- `reports/source_mapping_priorities.md`
-
-## Working with Claude, Codex or another LLM
-
-Use the checked-in handoff files:
+Checked-in handoff files (keep them and this README in sync):
 
 - `AGENTS.md` — shared rules for coding agents.
 - `CLAUDE.md` — Claude Code-specific notes.
 - `CODEX.md` — Codex-specific notes.
-- `docs/LLM_HANDOFF.md` — concise copy/paste context for a future LLM chat.
-- `docs/PROMPTING_GUIDE.md` — prompt examples for common LuxStats tasks.
+- `docs/LLM_HANDOFF.md` — concise copy/paste context.
+- `docs/PROMPTING_GUIDE.md` — prompt examples for common tasks.
 
-Any future agent should preserve the no-LLM-runtime rule and validate with the
-commands above.
-
-### How to inspect an Excel source
-
-Open the **Source Library** page, filter to a `STATEC_EXCEL` or
-`PUBLICATION_EXCEL` source, and use **Download / cache** then **Inspect
-sheets**. Inspection reports sheet names, row counts, likely time / geography
-/ value columns, and any detected commune names — and an ingestion status
-(`cataloged` → `downloaded` → `inspected` → `importable` /
-`needs_manual_mapping` / `failed`).
-
-### How to add a manual mapping
-
-Once an Excel/API source is confirmed useful, wire it into the curated layer:
-add a `Concept` (`src/concepts.py`) for an API dataflow, or an entry in
-`src/data/excel_sources.py` for an Excel file. The source catalog is for
-*discovery*; the `Concept` layer is for *curated charts*.
-
-## Map views
-
-Map views are deliberately honest: the app never fakes a map. Drop a commune
-boundary GeoJSON at `data/geography/communes.geojson` (with a `name` property
-per feature) and the Commune Portal map lights up automatically. Until then it
-shows a clear "boundary data has not been connected" message.
-
-## Deployment
-
-Deployable on Streamlit Community Cloud with no changes:
-
-1. Keep `app.py` at the repository root.
-2. Keep dependencies in `requirements.txt`.
-
-Cached data is local to the running environment; use the in-app refresh
-buttons to update it.
-
-## Known limitations / TODOs
-
-- **Commune boundary GeoJSON is not bundled.** Map views show an honest empty
-  state until `data/geography/communes.geojson` is connected. Official LAU
-  commune boundaries are available from the Luxembourg geoportal /
-  data.public.lu.
-- **Several catalog datasets still need confirmed LUSTAT IDs** — rents,
-  education, mobility, public finance and economy keep `TODO_CONFIRM_*`
-  placeholders in `src/catalog.py` and are not charted.
-- **Housing sale prices are national only.** The D4011 house price index and
-  average apartment prices are connected (`src/data/excel_sources.py`), but
-  STATEC publishes them at national level. Commune-level sale prices and
-  **rents** are still not connected — add them when an official source is
-  identified.
-- The housing commune metric (`DSD_CENSUS_NB_LOG_CLA@DF_B1707`) is a census
-  **dwelling count**, not a price estimate.
-- Housing-price quarterly figures are averaged to a yearly value for the
-  curated charts; the full quarterly detail is in each chart's advanced view.
-- **Source categorization is heuristic.** ~25% of LUSTAT dataflows have terse
-  titles and land in "Other / Unknown". Rules in `src/data/categorization.py`
-  are deliberately transparent and easy to extend — improve them rather than
-  hand-editing the catalog.
-- The source catalog is a **discovery** layer: cataloged Excel/publication
-  sources are not automatically charted. Connecting one still means adding a
-  curated `Concept` or `excel_sources.py` entry (a manual mapping).
-- The publication crawler covers a fixed set of well-known series. Add more
-  slugs to `PUBLICATION_SERIES` in `src/data/statec_publication_catalog.py`.
-
-## Next recommended ingestion priorities
-
-See `reports/source_mapping_priorities.md`. As of the current catalog, the
-highest-value unmapped items are housing permits by canton, population
-census breakdowns by commune, fertility, and short-term economy indicators.
-- "Recently updated" timestamps reflect when a dataset was last cached on the
-  running deployment, not an official STATEC publication date.
-
-## Dataset IDs / commune mappings to confirm manually
-
-Confirmed commune-level LUSTAT tables wired into the Commune Portal:
-
-- `DF_X021` — Population by canton and municipality.
-- `DF_X020` — Population density by canton and municipality on 1 January.
-- `DF_C1600` — Monthly salaries by municipality (Median indicator).
-- `DF_X026` — Employment and unemployment by canton and municipality
-  (unemployment-rate indicator).
-- `DSD_CENSUS_NB_LOG_CLA@DF_B1707` — Census dwellings by canton and
-  municipality (totals).
-- `DSD_CENSUS_MENAGE_PV@DF_B1703` — Census private households by canton and
-  municipality (total household size).
-
-National housing **sale-price** data is sourced from the STATEC publication
-*Logement en chiffres* (Excel file D4011): the house price index and average
-apartment prices, quarterly from 2017.
-
-Still to confirm: official sources for commune-level **rents** and
-**sale prices**, **education**, **mobility**, **public finance**, and headline
-**economy** indicators. The commune list is the 100 current Luxembourg
-communes from Luxembourg geoportal administrative metadata (checked May 2026).
+Any future agent must preserve the no-LLM-runtime rule and validate with the
+commands in §7.

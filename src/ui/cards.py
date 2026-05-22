@@ -1,8 +1,9 @@
-"""Friendly metric and analysis cards.
+"""Friendly result cards.
 
 These replace raw technical dataset rows with human-readable cards. A metric
 card describes one curated statistic; an analysis card describes a ready-made
-journey. Both keep dataset IDs and SDMX terms inside an advanced expander.
+journey; a question card is a plain-language entry point. Dataset IDs and SDMX
+terms stay inside an advanced expander.
 """
 
 from __future__ import annotations
@@ -27,30 +28,28 @@ def open_concept(concept_id: str) -> None:
 
 
 def render_metric_card(concept: Concept, *, key_prefix: str, on_open=None) -> None:
-    """Render one friendly metric result card.
-
-    ``on_open`` is an optional callback invoked with the concept id; when it is
-    omitted the card stores the concept in session state via :func:`open_concept`.
-    """
+    """Render one friendly metric result card."""
     with st.container(border=True):
         st.markdown(
-            f"<span class='lux-tag'>{concept.topic}</span>", unsafe_allow_html=True
+            f"<span class='lux-tag'>{concept.topic}</span>"
+            f"<span class='lux-tag lux-status-chart-ready'>Ready to chart</span>",
+            unsafe_allow_html=True,
         )
         st.markdown(f"**{concept.title}**")
         st.caption(concept.description)
         meta_bits = [
             _LEVEL_TEXT.get(concept.geographic_level, concept.geographic_level),
-            f"Best shown as: {concept.chart_label}",
-            "STATEC / LUSTAT",
+            concept.chart_label,
         ]
         st.markdown(
-            f"<div class='lux-card-meta'>{' · '.join(meta_bits)}</div>",
+            f"<div class='lux-card-meta'>{' · '.join(meta_bits)} · STATEC / LUSTAT</div>",
             unsafe_allow_html=True,
         )
         st.button(
             "Open chart",
             key=f"{key_prefix}_{concept.id}",
             use_container_width=True,
+            type="primary",
             on_click=on_open or open_concept,
             args=(concept.id,),
         )
@@ -74,11 +73,7 @@ def render_metric_grid(concepts: list[Concept], *, key_prefix: str, columns: int
 def render_analysis_card(card: AnalysisCard, *, key_prefix: str) -> None:
     """Render one guided analysis journey card."""
     with st.container(border=True):
-        st.markdown(
-            f"<span class='lux-tag'>{card.topic}</span> "
-            f"<span class='lux-muted'>{card.difficulty.capitalize()}</span>",
-            unsafe_allow_html=True,
-        )
+        st.markdown(f"<span class='lux-tag'>{card.topic}</span>", unsafe_allow_html=True)
         st.markdown(f"**{card.title}**")
         st.caption(card.blurb)
         if st.button("Open", key=f"{key_prefix}_{card.id}", use_container_width=True):
@@ -90,15 +85,18 @@ def render_analysis_card(card: AnalysisCard, *, key_prefix: str) -> None:
 
 
 def render_question_card(card: dict[str, object], *, key_prefix: str) -> None:
-    """Render a compact source-backed home question card."""
+    """Render a compact, plain-language entry-point card."""
     with st.container(border=True):
-        st.markdown(f"<span class='lux-tag'>{card['topic']}</span>", unsafe_allow_html=True)
-        st.markdown(f"**{card['question']}**")
-        st.caption(str(card["description"]))
+        chart_ready = bool(card.get("chart_ready"))
+        status_class = "lux-status-chart-ready" if chart_ready else "lux-status-unresolved"
+        status_text = "Chart ready" if chart_ready else "Source available"
         st.markdown(
-            f"<div class='lux-card-meta'>{int(card['source_count']):,} source(s) · {card['status']}</div>",
+            f"<span class='lux-tag'>{card['topic']}</span>"
+            f"<span class='lux-tag {status_class}'>{status_text}</span>",
             unsafe_allow_html=True,
         )
+        st.markdown(f"**{card['question']}**")
+        st.caption(str(card["description"]))
         if st.button("Open", key=f"{key_prefix}_{card['id']}", use_container_width=True):
             if card.get("concept_id"):
                 open_concept(str(card["concept_id"]))
@@ -109,7 +107,7 @@ def render_question_card(card: dict[str, object], *, key_prefix: str) -> None:
 
 def render_question_grid(cards: list[dict[str, object]], *, key_prefix: str,
                          columns: int = 4) -> None:
-    """Lay source-backed home question cards out in a compact grid."""
+    """Lay plain-language question cards out in a compact grid."""
     for start in range(0, len(cards), columns):
         cols = st.columns(columns)
         for col, card in zip(cols, cards[start:start + columns]):

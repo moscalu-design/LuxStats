@@ -1,37 +1,51 @@
 from __future__ import annotations
 
-from src.ui.navigation import NAV_GROUPS, all_nav_items, nav_page_paths
+from src.ui.navigation import (
+    NAV_GROUPS,
+    all_nav_items,
+    nav_page_paths,
+    primary_items,
+    topic_items,
+)
 
 
 def test_navigation_groups_are_product_ordered() -> None:
+    """Primary journeys first, topics next, advanced tools last."""
     assert [group for group, _items in NAV_GROUPS] == [
-        "Main",
+        "Primary",
         "Topics",
-        "Data & Sources",
-        "About / Help",
+        "More tools",
     ]
 
 
-def test_navigation_labels_match_public_structure() -> None:
-    labels = [item.label for item in all_nav_items()]
+def test_primary_group_leads_with_search() -> None:
+    """Home and search must be the obvious starting points."""
+    labels = [item.label for item in primary_items()]
+    assert labels == ["Home", "Find a statistic", "Compare", "What changed?"]
+
+
+def test_topics_are_compact_and_complete() -> None:
+    labels = [item.label for item in topic_items()]
     assert labels == [
-        "Home",
-        "Find a Statistic",
-        "Compare",
-        "Build a Chart",
-        "What Changed?",
         "Housing",
-        "Salaries & Income",
+        "Salaries & income",
         "Population",
-        "Labour Market",
-        "Prices & Inflation",
+        "Labour market",
+        "Prices & inflation",
         "Economy",
         "Tourism",
-        "Dataset Explorer",
-        "Source Library",
-        "About Data",
     ]
-    assert "Commune Portal" not in labels
+
+
+def test_advanced_tools_live_in_more_tools_group() -> None:
+    """Advanced/source pages must not sit in the primary journey."""
+    more = {item.page for item in all_nav_items() if item.group == "More tools"}
+    assert "pages/13_Source_Library.py" in more
+    assert "pages/11_Dataset_Explorer.py" in more
+    assert "pages/3_Commune_Portal.py" in more
+    # The Commune Portal is reachable, but not a top-level primary item.
+    primary_pages = {item.page for item in primary_items()}
+    assert "pages/3_Commune_Portal.py" not in primary_pages
 
 
 def test_navigation_has_no_duplicate_pages() -> None:
@@ -41,3 +55,11 @@ def test_navigation_has_no_duplicate_pages() -> None:
     assert "app.py" in nav_page_paths()
     assert "pages/13_Source_Library.py" in nav_page_paths()
     assert "pages/15_Tourism.py" in nav_page_paths()
+
+
+def test_every_product_page_is_reachable() -> None:
+    """All 15 product pages plus Home are in the single custom sidebar."""
+    paths = nav_page_paths()
+    assert len(paths) == 16  # app.py + 15 pages
+    for n in range(1, 16):
+        assert any(f"/{n}_" in p for p in paths)
