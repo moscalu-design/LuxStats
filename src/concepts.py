@@ -387,6 +387,42 @@ CONCEPTS: list[Concept] = [
         popular=False,
     ),
     Concept(
+        id="crime_recorded",
+        title="Crime recorded by the police",
+        description="The total number of offences recorded by Luxembourg police "
+        "each year, split between offences against goods and against people.",
+        topic="Population",
+        keywords=["crime", "crimes", "offences", "police", "criminality",
+                  "thefts", "burglaries", "violence", "vandalism",
+                  "safety", "security", "law and order", "is crime up"],
+        dataset_id="DF_C5201",
+        chart="line",
+        value_format="number",
+        series_dim="SPECIFICATION",
+        default_series=[
+            "Total",
+            "Offences against goods",
+            "Offences against people",
+        ],
+        series_labels={
+            "Total": "All recorded offences",
+            "Offences against goods": "Against goods (thefts, burglaries, vandalism…)",
+            "Offences against people": "Against people (violence, threats…)",
+        },
+        freq="Annual",
+        explanation="Each line counts offences recorded by Luxembourg police "
+        "in a given year. Offences against property make up the bulk of the "
+        "total; offences against people are roughly a quarter of all recorded "
+        "crime.",
+        unit_note="Number of recorded offences per year. The 'Total' line is "
+        "the sum across all categories, including ones not shown.",
+        caveat="Counts crimes recorded by the police, not crimes committed. "
+        "Reporting habits, prioritisation and category definitions change over "
+        "time, so year-to-year movements should be read with that in mind.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
         id="wage_indexation",
         title="Wage rises from automatic indexation",
         description="How much the automatic wage indexation added to salaries and "
@@ -766,6 +802,46 @@ CONCEPTS: list[Concept] = [
         recommended=True,
         popular=False,
         difficulty="intermediate",
+    ),
+    Concept(
+        id="new_car_registrations_by_fuel",
+        title="New cars registered, by fuel type",
+        description="Every new passenger car registered in Luxembourg each "
+        "year, split by what powers it.",
+        topic="Economy",
+        keywords=["cars", "car registrations", "new cars", "vehicles",
+                  "electric cars", "ev", "evs", "hybrid", "diesel", "petrol",
+                  "fuel mix", "electromobility", "new vehicle", "car sales",
+                  "car market", "transition", "decarbonisation"],
+        dataset_id="DF_D6122",
+        chart="line",
+        value_format="number",
+        series_dim="MOTOR_ENERGY",
+        default_series=[
+            "Total",
+            "Petrol",
+            "Diesel",
+            "Electricity",
+            "Hybrid electric-petrol",
+            "Hybrid diesel-electric",
+        ],
+        series_labels={
+            "Electricity": "Battery electric",
+            "Hybrid electric-petrol": "Hybrid (petrol)",
+            "Hybrid diesel-electric": "Hybrid (diesel)",
+        },
+        filters={"VEHICLE_TYPE": "Cars"},
+        freq="Annual",
+        annual_aggregation="sum",
+        explanation="Each line is the count of new passenger cars first "
+        "registered in Luxembourg in a given year. Battery-electric and hybrid "
+        "registrations have overtaken diesel and are closing in on petrol.",
+        unit_note="Number of new cars registered per year, by motor energy.",
+        caveat="Counts new registrations only — used-car transfers are excluded. "
+        "Hybrid totals include both plug-in and non-plug-in variants. The most "
+        "recent year may still be partial.",
+        recommended=True,
+        popular=False,
     ),
     Concept(
         id="cross_border_workers",
