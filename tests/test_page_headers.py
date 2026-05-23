@@ -7,7 +7,7 @@ def test_required_page_headers_exist() -> None:
     for page_id in [
         "home", "find", "commune", "compare", "builder", "changes",
         "housing", "salaries", "population", "labour", "prices", "economy",
-        "tourism", "source_library", "dataset_explorer", "about",
+        "tourism", "ai", "source_library", "dataset_explorer", "about",
     ]:
         header = get_page_header(page_id)
         assert header.title

@@ -46,6 +46,7 @@ _TOPIC_PAGE_ID = {
     "Prices & Inflation": "prices",
     "Economy": "economy",
     "Tourism": "tourism",
+    "AI Adoption": "ai",
 }
 
 # Cross-topic navigation shown at the foot of every topic page.
@@ -57,6 +58,7 @@ _NAV: list[tuple[str, str]] = [
     ("Prices & inflation", "pages/10_Prices_Inflation.py"),
     ("Economy", "pages/14_Economy.py"),
     ("Tourism", "pages/15_Tourism.py"),
+    ("AI adoption", "pages/16_AI.py"),
 ]
 
 # Topic -> page path, for the "you are here" check in the more-topics footer.
@@ -68,6 +70,7 @@ _TOPIC_PAGE = {
     "Prices & Inflation": "pages/10_Prices_Inflation.py",
     "Economy": "pages/14_Economy.py",
     "Tourism": "pages/15_Tourism.py",
+    "AI Adoption": "pages/16_AI.py",
 }
 
 

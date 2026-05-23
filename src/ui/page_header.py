@@ -68,6 +68,10 @@ PAGE_HEADERS: dict[str, PageHeader] = {
         "Tourism",
         "Accommodation arrivals and short-term tourism indicators.",
     ),
+    "ai": PageHeader(
+        "AI in Luxembourg",
+        "How widely businesses use AI, what for, where they get it and what holds them back.",
+    ),
     "source_library": PageHeader(
         "Source Library",
         "Advanced: every official source, its readiness and mapping status.",

@@ -793,6 +793,229 @@ CONCEPTS: list[Concept] = [
     ),
 ]
 
+_AI_ACTIVITY_FILTER = {
+    "ACTIVITY": "Non-financial business economy (C to S951, except K)",
+}
+
+CONCEPTS += [
+    Concept(
+        id="ai_adoption_trend",
+        title="How many companies use AI",
+        description="The share of Luxembourg companies using at least one AI "
+        "technology, year on year.",
+        topic="AI Adoption",
+        keywords=["ai", "artificial intelligence", "ai adoption", "ai usage",
+                  "companies using ai", "ai in business", "enterprise ai",
+                  "ai luxembourg", "ai trend"],
+        dataset_id="DSD_TIC_IA@DF_D8460",
+        chart="line",
+        value_format="percent",
+        series_dim="MEASURE",
+        default_series=["Use of at least one AI technology",
+                        "Use of at least two AI technologies",
+                        "Use of at least three AI technologies"],
+        series_labels={
+            "Use of at least one AI technology": "Using ≥1 AI technology",
+            "Use of at least two AI technologies": "Using ≥2 AI technologies",
+            "Use of at least three AI technologies": "Using ≥3 AI technologies",
+        },
+        filters=_AI_ACTIVITY_FILTER,
+        explanation="The share of Luxembourg firms (non-financial business "
+        "economy) using at least one — or two, or three — AI technologies. "
+        "Adoption jumped sharply in 2024 as generative AI tools went mainstream.",
+        unit_note="Share of enterprises, in percent. Non-financial business "
+        "economy (NACE C to S951, except K).",
+        caveat="From STATEC's ICT survey of enterprises. The 2022 wave did not "
+        "collect this question, so 2022 is absent.",
+        recommended=True,
+        popular=True,
+    ),
+    Concept(
+        id="ai_technologies_breakdown",
+        title="Which AI technologies companies use",
+        description="The mix of AI technologies in use across Luxembourg "
+        "enterprises, for the most recent year available.",
+        topic="AI Adoption",
+        keywords=["ai technologies", "machine learning", "text mining", "nlp",
+                  "speech recognition", "image recognition", "generative ai",
+                  "natural language generation", "robotics", "deep learning",
+                  "which ai", "types of ai"],
+        dataset_id="DSD_TIC_IA@DF_D8460",
+        chart="ranked_bar",
+        value_format="percent",
+        series_dim="MEASURE",
+        default_series=[
+            "Analysis of written language (text mining)",
+            "Generation of written or spoken language (natural language generation)",
+            "Conversion of spoken language into machine-readable format (speech recognition)",
+            "Identification of objects or persons based on images (image recognition, image processing)",
+            "Machine learning (e.g. deep learning) for data analysis",
+            "Automation of different workflows or assisting in decision making (AI based software robotic process automation)",
+            "Physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones)",
+        ],
+        series_labels={
+            "Analysis of written language (text mining)": "Text analysis",
+            "Generation of written or spoken language (natural language generation)":
+                "Text or speech generation",
+            "Conversion of spoken language into machine-readable format (speech recognition)":
+                "Speech recognition",
+            "Identification of objects or persons based on images (image recognition, image processing)":
+                "Image recognition",
+            "Machine learning (e.g. deep learning) for data analysis":
+                "Machine learning",
+            "Automation of different workflows or assisting in decision making (AI based software robotic process automation)":
+                "Workflow automation",
+            "Physical movement of machines via autonomous decisions based on observation of surroundings (autonomous robots, self-driving vehicles, autonomous drones)":
+                "Autonomous machines",
+        },
+        filters=_AI_ACTIVITY_FILTER,
+        explanation="Each bar is the share of Luxembourg companies using that "
+        "specific AI technology. Text-mining tools lead by a wide margin, "
+        "reflecting the boom in document and language analysis.",
+        unit_note="Share of enterprises, in percent. Most recent year available.",
+        caveat="Companies can use several technologies at once, so bars do not "
+        "sum to total AI adoption.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="ai_purposes",
+        title="What companies use AI for",
+        description="The business purposes for which Luxembourg companies are "
+        "putting AI to work.",
+        topic="AI Adoption",
+        keywords=["ai purposes", "ai uses", "what ai for", "ai marketing",
+                  "ai sales", "ai security", "ai accounting", "ai logistics",
+                  "ai r&d", "ai hr", "ai use cases", "ai functions"],
+        dataset_id="DSD_TIC_IA@DF_D8461",
+        chart="ranked_bar",
+        value_format="percent",
+        series_dim="MEASURE",
+        default_series=[
+            "For marketing or sales",
+            "For production processes",
+            "For organisation of business administration processes or management",
+            "For accounting, controlling or finance management",
+            "For logistics",
+            "For ICT security",
+            "For research and development (R&D) or innovation activity",
+            "For human resources management or recruiting",
+        ],
+        series_labels={
+            "For marketing or sales": "Marketing or sales",
+            "For production processes": "Production",
+            "For organisation of business administration processes or management":
+                "Business administration",
+            "For accounting, controlling or finance management":
+                "Accounting & finance",
+            "For logistics": "Logistics",
+            "For ICT security": "IT security",
+            "For research and development (R&D) or innovation activity":
+                "R&D or innovation",
+            "For human resources management or recruiting": "HR or recruiting",
+        },
+        filters=_AI_ACTIVITY_FILTER,
+        explanation="Each bar is the share of Luxembourg companies using AI for "
+        "that purpose. Administration, accounting and IT security are the most "
+        "common business use cases.",
+        unit_note="Share of enterprises, in percent. Most recent year available.",
+        caveat="Companies often use AI for several purposes at once, so bars "
+        "are not mutually exclusive.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="ai_acquisition",
+        title="How companies obtain their AI",
+        description="Whether Luxembourg companies buy AI software off the "
+        "shelf, customise it, or build it themselves.",
+        topic="AI Adoption",
+        keywords=["ai acquisition", "build vs buy", "ai sourcing", "ai vendors",
+                  "open source ai", "in-house ai", "commercial ai",
+                  "ai software", "ai development"],
+        dataset_id="DSD_TIC_IA@DF_D8462",
+        chart="ranked_bar",
+        value_format="percent",
+        series_dim="MEASURE",
+        default_series=[
+            "Commercial software or systems ready to use",
+            "Commercial software or systems modified by own employees",
+            "Software or systems developed or modified by external providers",
+            "Open-source software or systems modified by own employees",
+            "Software or systems developed by own employees",
+        ],
+        series_labels={
+            "Commercial software or systems ready to use":
+                "Commercial, ready-to-use",
+            "Commercial software or systems modified by own employees":
+                "Commercial, customised in-house",
+            "Software or systems developed or modified by external providers":
+                "Built or modified by external providers",
+            "Open-source software or systems modified by own employees":
+                "Open-source, customised in-house",
+            "Software or systems developed by own employees":
+                "Built fully in-house",
+        },
+        filters=_AI_ACTIVITY_FILTER,
+        explanation="Each bar is the share of Luxembourg companies obtaining "
+        "their AI in that way. Ready-to-use commercial software is by far the "
+        "most common path; very few firms build AI fully in-house.",
+        unit_note="Share of enterprises, in percent. Most recent year available.",
+        caveat="A company can obtain AI through several channels at once, so "
+        "bars are not mutually exclusive.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
+        id="ai_barriers",
+        title="Why companies don't use AI",
+        description="The reasons Luxembourg companies that considered AI give "
+        "for not adopting it.",
+        topic="AI Adoption",
+        keywords=["ai barriers", "why not ai", "ai obstacles", "ai costs",
+                  "ai skills", "ai privacy", "ai ethics", "ai regulation",
+                  "ai concerns", "ai limitations"],
+        dataset_id="DSD_TIC_IA@DF_D8463",
+        chart="ranked_bar",
+        value_format="percent",
+        series_dim="MEASURE",
+        default_series=[
+            "Costs seem too high",
+            "Lack of relevant expertise",
+            "Incompatibility with existing equipment, software or systems",
+            "Difficulties with availability or quality of the necessary data",
+            "Concerns regarding violation of data protection and privacy",
+            "Lack of clarity about the legal consequences",
+            "Ethical considerations",
+            "Technologies are not useful for the enterprise",
+        ],
+        series_labels={
+            "Costs seem too high": "Cost",
+            "Lack of relevant expertise": "Lack of expertise",
+            "Incompatibility with existing equipment, software or systems":
+                "Incompatible systems",
+            "Difficulties with availability or quality of the necessary data":
+                "Data availability or quality",
+            "Concerns regarding violation of data protection and privacy":
+                "Privacy concerns",
+            "Lack of clarity about the legal consequences": "Legal uncertainty",
+            "Ethical considerations": "Ethical concerns",
+            "Technologies are not useful for the enterprise":
+                "Not useful for the business",
+        },
+        filters=_AI_ACTIVITY_FILTER,
+        explanation="Among Luxembourg companies that considered AI but did not "
+        "adopt it, each bar is the share citing that reason. Missing expertise "
+        "and legal uncertainty top the list.",
+        unit_note="Share of enterprises (among those that considered AI), in "
+        "percent. Most recent year available.",
+        caveat="Companies typically cite several reasons at once, so bars are "
+        "not mutually exclusive.",
+        recommended=True,
+        popular=False,
+    ),
+]
+
 CONCEPTS_BY_ID: dict[str, Concept] = {c.id: c for c in CONCEPTS}
 
 

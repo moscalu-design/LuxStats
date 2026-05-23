@@ -25,6 +25,9 @@ SYNONYM_GROUPS: list[list[str]] = [
     ["commune", "communes", "municipality", "town", "city", "canton"],
     ["tourism", "tourist", "tourists", "arrivals", "hotel", "hotels",
      "overnight stays", "nights", "accommodation", "d5301", "d5310"],
+    ["ai", "artificial intelligence", "machine learning", "ml",
+     "generative ai", "genai", "chatbot", "chatbots", "automation",
+     "ai adoption", "ai use", "enterprise ai", "ai luxembourg"],
 ]
 
 

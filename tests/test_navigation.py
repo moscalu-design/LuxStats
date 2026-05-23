@@ -34,6 +34,7 @@ def test_topics_are_compact_and_complete() -> None:
         "Prices & inflation",
         "Economy",
         "Tourism",
+        "AI adoption",
     ]
 
 
@@ -58,8 +59,8 @@ def test_navigation_has_no_duplicate_pages() -> None:
 
 
 def test_every_product_page_is_reachable() -> None:
-    """All 15 product pages plus Home are in the single custom sidebar."""
+    """All 16 product pages plus Home are in the single custom sidebar."""
     paths = nav_page_paths()
-    assert len(paths) == 16  # app.py + 15 pages
-    for n in range(1, 16):
+    assert len(paths) == 17  # app.py + 16 pages
+    for n in range(1, 17):
         assert any(f"/{n}_" in p for p in paths)

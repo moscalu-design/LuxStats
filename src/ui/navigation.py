@@ -51,6 +51,7 @@ NAV_GROUPS: tuple[tuple[str, tuple[NavItem, ...]], ...] = (
             NavItem("Prices & inflation", "pages/10_Prices_Inflation.py", "Topics"),
             NavItem("Economy", "pages/14_Economy.py", "Topics"),
             NavItem("Tourism", "pages/15_Tourism.py", "Topics"),
+            NavItem("AI adoption", "pages/16_AI.py", "Topics"),
         ),
     ),
     (

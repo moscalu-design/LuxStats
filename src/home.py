@@ -35,6 +35,8 @@ TOPIC_TILES: list[tuple[str, str, str, str]] = [
      "pages/14_Economy.py"),
     ("🧳", "Tourism", "Accommodation arrivals and overnight stays.",
      "pages/15_Tourism.py"),
+    ("🤖", "AI adoption", "How widely companies use AI, and what for.",
+     "pages/16_AI.py"),
 ]
 
 # Secondary tools — useful, but not the headline. (icon, name, blurb, page).

@@ -42,7 +42,7 @@ def test_default_streamlit_nav_is_disabled() -> None:
 def test_home_has_focused_landing_sections() -> None:
     from src import home
 
-    assert len(home.TOPIC_TILES) == 7
+    assert len(home.TOPIC_TILES) == 8
     assert len(home.TOOL_TILES) == 4
     src = (ROOT / "src" / "home.py").read_text(encoding="utf-8")
     for section in ("Start with a question", "Explore by topic",
