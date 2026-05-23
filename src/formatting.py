@@ -17,6 +17,7 @@ VALUE_FORMATS = {
     "index": {"suffix": "", "prefix": "", "decimals": 1, "tick": ",.1f"},
     "rate": {"suffix": "", "prefix": "", "decimals": 2, "tick": ",.2f"},
     "m2": {"suffix": " m²", "prefix": "", "decimals": 0, "tick": ",.0f"},
+    "eur_per_litre": {"suffix": "/L", "prefix": "€", "decimals": 3, "tick": ",.3f"},
 }
 
 

@@ -659,6 +659,36 @@ CONCEPTS: list[Concept] = [
         difficulty="intermediate",
     ),
     Concept(
+        id="fuel_prices",
+        title="Petrol prices at the pump",
+        description="The official maximum price of unleaded petrol in Luxembourg, "
+        "in euros per litre.",
+        topic="Prices & Inflation",
+        keywords=["gas prices", "gasoline", "petrol", "fuel", "essence",
+                  "pump price", "price of petrol", "price of gas",
+                  "unleaded", "sp95", "sp98", "octane", "litre",
+                  "how much is petrol", "energy prices"],
+        dataset_id="DSD_PRIX_ESSENCE@DF_E5301",
+        chart="line",
+        value_format="eur_per_litre",
+        series_dim="MOTOR_ENERGY",
+        default_series=["95 octane unleded petrol", "98 octane unleaded petrol"],
+        series_labels={
+            "95 octane unleded petrol": "Unleaded 95",
+            "98 octane unleaded petrol": "Unleaded 98",
+        },
+        explanation="Each line is the average official maximum pump price for "
+        "unleaded petrol, in euros per litre. Prices spiked in 2022 with the "
+        "energy crisis and have stayed well above their pre-2021 level since.",
+        unit_note="Maximum retail price, in euros per litre. Daily/irregular "
+        "STATEC observations are averaged by year.",
+        caveat="Official maximum prices set by the Ministry of the Economy, not "
+        "the actual price you pay at every station. Diesel and heating gasoil are "
+        "published separately by STATEC.",
+        recommended=True,
+        popular=True,
+    ),
+    Concept(
         id="prices_by_category",
         title="Inflation by spending category",
         description="How fast prices rose each year in the main parts of the "
