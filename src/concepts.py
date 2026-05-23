@@ -689,6 +689,32 @@ CONCEPTS: list[Concept] = [
         popular=True,
     ),
     Concept(
+        id="online_shopping_categories",
+        title="What people buy online",
+        description="The share of internet users in Luxembourg who bought each "
+        "kind of good or service online in the past three months.",
+        topic="Economy",
+        keywords=["online shopping", "e-commerce", "internet purchases",
+                  "what people buy online", "digital", "online sales",
+                  "ecommerce", "internet shopping", "online retail",
+                  "living conditions", "consumer behaviour"],
+        dataset_id="DF_C1407",
+        chart="ranked_bar",
+        value_format="percent",
+        series_dim="BIEN_SERVICE_ACHETE",
+        freq="Annual",
+        explanation="Each bar is the share of internet users who bought that "
+        "category online in the past three months, for the most recent year "
+        "available. Clothing dominates online shopping in Luxembourg, well "
+        "ahead of food, electronics or restaurant deliveries.",
+        unit_note="Share of internet users aged 16–74, in percent. Reference "
+        "period: previous three months.",
+        caveat="From the EU ICT household survey. Categories with too few "
+        "responses in a given year are shown as 'not available' and skipped.",
+        recommended=True,
+        popular=False,
+    ),
+    Concept(
         id="prices_by_category",
         title="Inflation by spending category",
         description="How fast prices rose each year in the main parts of the "
